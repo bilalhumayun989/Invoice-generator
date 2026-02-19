@@ -14,125 +14,214 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, onBack }) 
   const total = subtotal + tax;
 
   const handlePrint = () => {
-    const content = printRef.current;
-    if (!content) return;
-    const win = window.open('', '_blank');
-    if (!win) return;
-    win.document.write(`
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <title>Invoice ${data.invoiceNumber}</title>
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <style>
-            * { margin: 0; padding: 0; box-sizing: border-box; }
-            body { font-family: 'Georgia', serif; background: #fff; color: #1a1a1a; }
-            .invoice { max-width: 800px; margin: 0 auto; padding: 56px 64px; }
-            .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px; }
-            .logo { font-size: 26px; font-weight: bold; color: #1a1a1a; letter-spacing: -0.5px; }
-            .inv-meta { text-align: right; }
-            .inv-meta h2 { font-size: 36px; color: #1a1a1a; font-weight: 300; letter-spacing: 6px; text-transform: uppercase; }
-            .inv-meta p { font-size: 12px; color: #666; margin-top: 4px; font-family: monospace; }
-            .inv-meta .dates { margin-top: 10px; }
-            .inv-meta .dates p { font-family: Georgia, serif; font-size: 12px; color: #888; }
-            .divider { height: 1px; background: #1a1a1a; margin: 32px 0; }
-            .parties { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; margin-bottom: 44px; }
-            .party-label { font-size: 9px; text-transform: uppercase; letter-spacing: 3px; color: #999; margin-bottom: 10px; }
-            .party-name { font-size: 15px; font-weight: bold; color: #1a1a1a; margin-bottom: 6px; }
-            .party-detail { font-size: 12px; color: #555; line-height: 1.8; }
-            table { width: 100%; border-collapse: collapse; margin-bottom: 36px; }
-            thead tr { border-bottom: 1.5px solid #1a1a1a; }
-            thead th { font-size: 9px; text-transform: uppercase; letter-spacing: 2px; color: #999; padding: 0 0 10px 0; text-align: left; font-weight: 600; }
-            thead th:not(:first-child) { text-align: right; padding-left: 16px; }
-            tbody tr { border-bottom: 1px solid #f0f0f0; }
-            tbody td { padding: 13px 0; font-size: 13px; color: #333; vertical-align: middle; }
-            tbody td:not(:first-child) { text-align: right; padding-left: 16px; font-family: monospace; font-size: 12px; }
-            tbody tr:last-child { border-bottom: none; }
-            .totals { margin-left: auto; width: 240px; border-top: 1px solid #e8e8e8; padding-top: 16px; }
-            .total-row { display: flex; justify-content: space-between; padding: 5px 0; font-size: 12px; color: #666; }
-            .total-row span:last-child { font-family: monospace; }
-            .total-final { display: flex; justify-content: space-between; padding: 14px 0 0 0; font-size: 17px; font-weight: bold; color: #1a1a1a; border-top: 1.5px solid #1a1a1a; margin-top: 10px; }
-            .total-final span:last-child { font-family: monospace; }
-            .notes { margin-top: 52px; padding: 20px 24px; background: #fafafa; border-left: 2px solid #1a1a1a; }
-            .notes-label { font-size: 9px; text-transform: uppercase; letter-spacing: 3px; color: #999; margin-bottom: 8px; }
-            .notes-text { font-size: 12px; color: #555; font-style: italic; line-height: 1.7; }
-            .footer { margin-top: 64px; padding-top: 20px; border-top: 1px solid #f0f0f0; display: flex; justify-content: space-between; align-items: center; }
-            .footer-left { font-size: 11px; color: #bbb; }
-            .footer-right { font-size: 11px; color: #bbb; font-family: monospace; }
-            @media print {
-              body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-              .invoice { padding: 40px 48px; }
-            }
-          </style>
-        </head>
-        <body>
-          <div class="invoice">
-            <div class="header">
-              <div class="logo">${data.companyName}</div>
-              <div class="inv-meta">
-                <h2>Invoice</h2>
-                <p>${data.invoiceNumber}</p>
-                <div class="dates">
-                  <p style="margin-top:10px">Issued: ${data.issueDate}</p>
-                  <p>Due: ${data.dueDate}</p>
-                </div>
-              </div>
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+    if (isMobile) {
+      const style = document.createElement('style');
+      style.id = 'mobile-print-style';
+      style.innerHTML = `
+        @media print {
+          body > *:not(#mobile-print-wrapper) { display: none !important; }
+          #mobile-print-wrapper { display: block !important; position: fixed; top: 0; left: 0; width: 100%; background: white; }
+        }
+      `;
+
+      const wrapper = document.createElement('div');
+      wrapper.id = 'mobile-print-wrapper';
+      wrapper.style.cssText = 'display:none;';
+      wrapper.innerHTML = `
+        <div style="font-family:Georgia,serif; padding:32px; color:#1a1a1a; max-width:800px; margin:0 auto;">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:32px;">
+            <div>
+              <div style="font-size:22px; font-weight:bold;">${data.companyName}</div>
+              <div style="font-size:12px; color:#888; margin-top:4px;">${data.companyEmail}</div>
+              <div style="font-size:12px; color:#888;">${data.companyPhone}</div>
             </div>
-            <div class="divider"></div>
-            <div class="parties">
-              <div>
-                <div class="party-label">From</div>
-                <div class="party-name">${data.companyName}</div>
-                <div class="party-detail">${data.companyEmail}<br/>${data.companyPhone}</div>
-              </div>
-              <div>
-                <div class="party-label">Bill To</div>
-                <div class="party-name">${data.clientName}</div>
-                <div class="party-detail">${data.clientEmail}<br/>${data.clientAddress}</div>
-              </div>
-            </div>
-            <table>
-              <thead>
-                <tr>
-                  <th>Description</th>
-                  <th>Qty</th>
-                  <th>Unit Price</th>
-                  <th>Amount</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${data.items.map(item => `
-                  <tr>
-                    <td>${item.description}</td>
-                    <td style="text-align:right;padding-left:16px;font-family:monospace;font-size:12px">${item.quantity}</td>
-                    <td style="text-align:right;padding-left:16px;font-family:monospace;font-size:12px">$${item.unitPrice.toFixed(2)}</td>
-                    <td style="text-align:right;padding-left:16px;font-family:monospace;font-size:12px;font-weight:600">$${(item.quantity * item.unitPrice).toFixed(2)}</td>
-                  </tr>
-                `).join('')}
-              </tbody>
-            </table>
-            <div class="totals">
-              <div class="total-row"><span>Subtotal</span><span>$${subtotal.toFixed(2)}</span></div>
-              <div class="total-row"><span>Tax (${data.taxRate}%)</span><span>$${tax.toFixed(2)}</span></div>
-              <div class="total-final"><span>Total</span><span>$${total.toFixed(2)}</span></div>
-            </div>
-            ${data.notes ? `
-              <div class="notes">
-                <div class="notes-label">Notes</div>
-                <div class="notes-text">${data.notes}</div>
-              </div>
-            ` : ''}
-            <div class="footer">
-              <span class="footer-left">Thank you for your business.</span>
-              <span class="footer-right">${data.invoiceNumber}</span>
+            <div style="text-align:right;">
+              <div style="font-size:28px; font-weight:300; letter-spacing:6px; text-transform:uppercase;">Invoice</div>
+              <div style="font-size:12px; color:#666; font-family:monospace; margin-top:4px;">${data.invoiceNumber}</div>
+              <div style="font-size:12px; color:#888; margin-top:8px;">Issued: ${data.issueDate}</div>
+              <div style="font-size:12px; color:#888;">Due: ${data.dueDate}</div>
             </div>
           </div>
-        </body>
-      </html>
-    `);
-    win.document.close();
-    win.focus();
-    setTimeout(() => { win.print(); win.close(); }, 300);
+          <div style="height:1px; background:#1a1a1a; margin-bottom:28px;"></div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:40px; margin-bottom:36px;">
+            <div>
+              <div style="font-size:9px; text-transform:uppercase; letter-spacing:3px; color:#999; margin-bottom:8px;">From</div>
+              <div style="font-weight:bold; font-size:14px;">${data.companyName}</div>
+              <div style="font-size:12px; color:#555; margin-top:4px;">${data.companyEmail}<br/>${data.companyPhone}</div>
+            </div>
+            <div>
+              <div style="font-size:9px; text-transform:uppercase; letter-spacing:3px; color:#999; margin-bottom:8px;">Bill To</div>
+              <div style="font-weight:bold; font-size:14px;">${data.clientName}</div>
+              <div style="font-size:12px; color:#555; margin-top:4px;">${data.clientEmail}<br/>${data.clientAddress}</div>
+            </div>
+          </div>
+          <table style="width:100%; border-collapse:collapse; margin-bottom:28px;">
+            <thead>
+              <tr style="border-bottom:1.5px solid #1a1a1a;">
+                <th style="font-size:9px; text-transform:uppercase; letter-spacing:2px; color:#999; padding:0 0 10px 0; text-align:left;">Description</th>
+                <th style="font-size:9px; text-transform:uppercase; letter-spacing:2px; color:#999; padding:0 0 10px 16px; text-align:right;">Qty</th>
+                <th style="font-size:9px; text-transform:uppercase; letter-spacing:2px; color:#999; padding:0 0 10px 16px; text-align:right;">Unit Price</th>
+                <th style="font-size:9px; text-transform:uppercase; letter-spacing:2px; color:#999; padding:0 0 10px 16px; text-align:right;">Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${data.items.map(item => `
+                <tr style="border-bottom:1px solid #f0f0f0;">
+                  <td style="padding:12px 0; font-size:13px; color:#333;">${item.description || '—'}</td>
+                  <td style="padding:12px 0 12px 16px; font-size:12px; font-family:monospace; text-align:right; color:#555;">${item.quantity}</td>
+                  <td style="padding:12px 0 12px 16px; font-size:12px; font-family:monospace; text-align:right; color:#555;">$${item.unitPrice.toFixed(2)}</td>
+                  <td style="padding:12px 0 12px 16px; font-size:12px; font-family:monospace; text-align:right; font-weight:600; color:#1a1a1a;">$${(item.quantity * item.unitPrice).toFixed(2)}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+          <div style="display:flex; justify-content:flex-end; margin-bottom:32px;">
+            <div style="width:220px;">
+              <div style="display:flex; justify-content:space-between; padding:4px 0; font-size:12px; color:#666;"><span>Subtotal</span><span style="font-family:monospace;">$${subtotal.toFixed(2)}</span></div>
+              <div style="display:flex; justify-content:space-between; padding:4px 0; font-size:12px; color:#666;"><span>Tax (${data.taxRate}%)</span><span style="font-family:monospace;">$${tax.toFixed(2)}</span></div>
+              <div style="display:flex; justify-content:space-between; padding:12px 0 0 0; font-size:16px; font-weight:bold; color:#1a1a1a; border-top:1.5px solid #1a1a1a; margin-top:8px;"><span>Total</span><span style="font-family:monospace;">$${total.toFixed(2)}</span></div>
+            </div>
+          </div>
+          ${data.notes ? `
+            <div style="padding:16px 20px; background:#fafafa; border-left:2px solid #1a1a1a;">
+              <div style="font-size:9px; text-transform:uppercase; letter-spacing:3px; color:#999; margin-bottom:6px;">Notes</div>
+              <div style="font-size:12px; color:#555; font-style:italic; line-height:1.7;">${data.notes}</div>
+            </div>
+          ` : ''}
+          <div style="margin-top:48px; padding-top:16px; border-top:1px solid #f0f0f0; display:flex; justify-content:space-between;">
+            <span style="font-size:11px; color:#bbb;">Thank you for your business.</span>
+            <span style="font-size:11px; color:#bbb; font-family:monospace;">${data.invoiceNumber}</span>
+          </div>
+        </div>
+      `;
+
+      document.head.appendChild(style);
+      document.body.appendChild(wrapper);
+      window.print();
+
+      setTimeout(() => {
+        document.getElementById('mobile-print-style')?.remove();
+        document.getElementById('mobile-print-wrapper')?.remove();
+      }, 1000);
+
+    } else {
+      const win = window.open('', '_blank');
+      if (!win) return;
+      win.document.write(`
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>Invoice ${data.invoiceNumber}</title>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <style>
+              * { margin: 0; padding: 0; box-sizing: border-box; }
+              body { font-family: 'Georgia', serif; background: #fff; color: #1a1a1a; }
+              .invoice { max-width: 800px; margin: 0 auto; padding: 56px 64px; }
+              .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px; }
+              .logo { font-size: 26px; font-weight: bold; color: #1a1a1a; letter-spacing: -0.5px; }
+              .inv-meta { text-align: right; }
+              .inv-meta h2 { font-size: 36px; color: #1a1a1a; font-weight: 300; letter-spacing: 6px; text-transform: uppercase; }
+              .inv-meta p { font-size: 12px; color: #666; margin-top: 4px; font-family: monospace; }
+              .inv-meta .dates { margin-top: 10px; }
+              .inv-meta .dates p { font-family: Georgia, serif; font-size: 12px; color: #888; }
+              .divider { height: 1px; background: #1a1a1a; margin: 32px 0; }
+              .parties { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; margin-bottom: 44px; }
+              .party-label { font-size: 9px; text-transform: uppercase; letter-spacing: 3px; color: #999; margin-bottom: 10px; }
+              .party-name { font-size: 15px; font-weight: bold; color: #1a1a1a; margin-bottom: 6px; }
+              .party-detail { font-size: 12px; color: #555; line-height: 1.8; }
+              table { width: 100%; border-collapse: collapse; margin-bottom: 36px; }
+              thead tr { border-bottom: 1.5px solid #1a1a1a; }
+              thead th { font-size: 9px; text-transform: uppercase; letter-spacing: 2px; color: #999; padding: 0 0 10px 0; text-align: left; font-weight: 600; }
+              thead th:not(:first-child) { text-align: right; padding-left: 16px; }
+              tbody tr { border-bottom: 1px solid #f0f0f0; }
+              tbody td { padding: 13px 0; font-size: 13px; color: #333; vertical-align: middle; }
+              tbody td:not(:first-child) { text-align: right; padding-left: 16px; font-family: monospace; font-size: 12px; }
+              tbody tr:last-child { border-bottom: none; }
+              .totals { margin-left: auto; width: 240px; border-top: 1px solid #e8e8e8; padding-top: 16px; }
+              .total-row { display: flex; justify-content: space-between; padding: 5px 0; font-size: 12px; color: #666; }
+              .total-row span:last-child { font-family: monospace; }
+              .total-final { display: flex; justify-content: space-between; padding: 14px 0 0 0; font-size: 17px; font-weight: bold; color: #1a1a1a; border-top: 1.5px solid #1a1a1a; margin-top: 10px; }
+              .total-final span:last-child { font-family: monospace; }
+              .notes { margin-top: 52px; padding: 20px 24px; background: #fafafa; border-left: 2px solid #1a1a1a; }
+              .notes-label { font-size: 9px; text-transform: uppercase; letter-spacing: 3px; color: #999; margin-bottom: 8px; }
+              .notes-text { font-size: 12px; color: #555; font-style: italic; line-height: 1.7; }
+              .footer { margin-top: 64px; padding-top: 20px; border-top: 1px solid #f0f0f0; display: flex; justify-content: space-between; align-items: center; }
+              .footer-left { font-size: 11px; color: #bbb; }
+              .footer-right { font-size: 11px; color: #bbb; font-family: monospace; }
+              @media print {
+                body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+                .invoice { padding: 40px 48px; }
+              }
+            </style>
+          </head>
+          <body>
+            <div class="invoice">
+              <div class="header">
+                <div class="logo">${data.companyName}</div>
+                <div class="inv-meta">
+                  <h2>Invoice</h2>
+                  <p>${data.invoiceNumber}</p>
+                  <div class="dates">
+                    <p style="margin-top:10px">Issued: ${data.issueDate}</p>
+                    <p>Due: ${data.dueDate}</p>
+                  </div>
+                </div>
+              </div>
+              <div class="divider"></div>
+              <div class="parties">
+                <div>
+                  <div class="party-label">From</div>
+                  <div class="party-name">${data.companyName}</div>
+                  <div class="party-detail">${data.companyEmail}<br/>${data.companyPhone}</div>
+                </div>
+                <div>
+                  <div class="party-label">Bill To</div>
+                  <div class="party-name">${data.clientName}</div>
+                  <div class="party-detail">${data.clientEmail}<br/>${data.clientAddress}</div>
+                </div>
+              </div>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Description</th><th>Qty</th><th>Unit Price</th><th>Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${data.items.map(item => `
+                    <tr>
+                      <td>${item.description || '—'}</td>
+                      <td style="text-align:right;padding-left:16px;font-family:monospace;font-size:12px">${item.quantity}</td>
+                      <td style="text-align:right;padding-left:16px;font-family:monospace;font-size:12px">$${item.unitPrice.toFixed(2)}</td>
+                      <td style="text-align:right;padding-left:16px;font-family:monospace;font-size:12px;font-weight:600">$${(item.quantity * item.unitPrice).toFixed(2)}</td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+              <div class="totals">
+                <div class="total-row"><span>Subtotal</span><span>$${subtotal.toFixed(2)}</span></div>
+                <div class="total-row"><span>Tax (${data.taxRate}%)</span><span>$${tax.toFixed(2)}</span></div>
+                <div class="total-final"><span>Total</span><span>$${total.toFixed(2)}</span></div>
+              </div>
+              ${data.notes ? `
+                <div class="notes">
+                  <div class="notes-label">Notes</div>
+                  <div class="notes-text">${data.notes}</div>
+                </div>
+              ` : ''}
+              <div class="footer">
+                <span class="footer-left">Thank you for your business.</span>
+                <span class="footer-right">${data.invoiceNumber}</span>
+              </div>
+            </div>
+          </body>
+        </html>
+      `);
+      win.document.close();
+      win.focus();
+      setTimeout(() => { win.print(); win.close(); }, 300);
+    }
   };
 
   return (
@@ -191,7 +280,7 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, onBack }) 
             </div>
 
             {/* Divider */}
-            <div style={{ height: '2px', background: 'linear-gradient(to right, #000000, #000000, #000000)', marginBottom: '28px' }} />
+            <div style={{ height: '2px', background: '#000000', marginBottom: '28px' }} />
 
             {/* Parties */}
             <div className="grid grid-cols-2 gap-6 sm:gap-10 mb-8 sm:mb-10">
@@ -211,7 +300,7 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, onBack }) 
               </div>
             </div>
 
-            {/* Items Table — scrollable on mobile */}
+            {/* Items Table */}
             <div className="overflow-x-auto -mx-6 sm:mx-0 px-6 sm:px-0 mb-6 sm:mb-8">
               <table className="w-full" style={{ borderCollapse: 'collapse', minWidth: '460px' }}>
                 <thead>
