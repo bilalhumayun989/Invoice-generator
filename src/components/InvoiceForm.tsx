@@ -240,13 +240,13 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({ data, onChange, onPrev
           </div>
           <div className="text-right space-y-1 text-sm">
             <div className="flex justify-between text-[#555]">
-              <span>Subtotal</span><span className="font-mono">${subtotal.toFixed(2)}</span>
+              <span>Subtotal</span><span className="font-mono">R.s{subtotal.toFixed(2)}</span>
             </div>
             <div className="flex justify-between text-[#555]">
-              <span>Tax ({data.taxRate}%)</span><span className="font-mono">${tax.toFixed(2)}</span>
+              <span>Tax ({data.taxRate}%)</span><span className="font-mono">R.s{tax.toFixed(2)}</span>
             </div>
             <div className="flex justify-between text-[#000000] font-bold text-base border-t border-[#e8d9c0] pt-1 mt-1">
-              <span>Total</span><span className="font-mono">${total.toFixed(2)}</span>
+              <span>Total</span><span className="font-mono">R.s{total.toFixed(2)}</span>
             </div>
           </div>
         </div>

@@ -71,17 +71,17 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, onBack }) 
                 <tr style="border-bottom:1px solid #f0f0f0;">
                   <td style="padding:12px 0; font-size:13px; color:#333;">${item.description || '—'}</td>
                   <td style="padding:12px 0 12px 16px; font-size:12px; font-family:monospace; text-align:right; color:#555;">${item.quantity}</td>
-                  <td style="padding:12px 0 12px 16px; font-size:12px; font-family:monospace; text-align:right; color:#555;">$${item.unitPrice.toFixed(2)}</td>
-                  <td style="padding:12px 0 12px 16px; font-size:12px; font-family:monospace; text-align:right; font-weight:600; color:#1a1a1a;">$${(item.quantity * item.unitPrice).toFixed(2)}</td>
+                  <td style="padding:12px 0 12px 16px; font-size:12px; font-family:monospace; text-align:right; color:#555;">Rs.${item.unitPrice.toFixed(2)}</td>
+                  <td style="padding:12px 0 12px 16px; font-size:12px; font-family:monospace; text-align:right; font-weight:600; color:#1a1a1a;">Rs.${(item.quantity * item.unitPrice).toFixed(2)}</td>
                 </tr>
               `).join('')}
             </tbody>
           </table>
           <div style="display:flex; justify-content:flex-end; margin-bottom:32px;">
             <div style="width:220px;">
-              <div style="display:flex; justify-content:space-between; padding:4px 0; font-size:12px; color:#666;"><span>Subtotal</span><span style="font-family:monospace;">$${subtotal.toFixed(2)}</span></div>
-              <div style="display:flex; justify-content:space-between; padding:4px 0; font-size:12px; color:#666;"><span>Tax (${data.taxRate}%)</span><span style="font-family:monospace;">$${tax.toFixed(2)}</span></div>
-              <div style="display:flex; justify-content:space-between; padding:12px 0 0 0; font-size:16px; font-weight:bold; color:#1a1a1a; border-top:1.5px solid #1a1a1a; margin-top:8px;"><span>Total</span><span style="font-family:monospace;">$${total.toFixed(2)}</span></div>
+              <div style="display:flex; justify-content:space-between; padding:4px 0; font-size:12px; color:#666;"><span>Subtotal</span><span style="font-family:monospace;">Rs.${subtotal.toFixed(2)}</span></div>
+              <div style="display:flex; justify-content:space-between; padding:4px 0; font-size:12px; color:#666;"><span>Tax (${data.taxRate}%)</span><span style="font-family:monospace;">Rs.${tax.toFixed(2)}</span></div>
+              <div style="display:flex; justify-content:space-between; padding:12px 0 0 0; font-size:16px; font-weight:bold; color:#1a1a1a; border-top:1.5px solid #1a1a1a; margin-top:8px;"><span>Total</span><span style="font-family:monospace;">Rs.${total.toFixed(2)}</span></div>
             </div>
           </div>
           ${data.notes ? `
@@ -193,16 +193,16 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, onBack }) 
                     <tr>
                       <td>${item.description || '—'}</td>
                       <td style="text-align:right;padding-left:16px;font-family:monospace;font-size:12px">${item.quantity}</td>
-                      <td style="text-align:right;padding-left:16px;font-family:monospace;font-size:12px">$${item.unitPrice.toFixed(2)}</td>
-                      <td style="text-align:right;padding-left:16px;font-family:monospace;font-size:12px;font-weight:600">$${(item.quantity * item.unitPrice).toFixed(2)}</td>
+                      <td style="text-align:right;padding-left:16px;font-family:monospace;font-size:12px">Rs.${item.unitPrice.toFixed(2)}</td>
+                      <td style="text-align:right;padding-left:16px;font-family:monospace;font-size:12px;font-weight:600">Rs.${(item.quantity * item.unitPrice).toFixed(2)}</td>
                     </tr>
                   `).join('')}
                 </tbody>
               </table>
               <div class="totals">
-                <div class="total-row"><span>Subtotal</span><span>$${subtotal.toFixed(2)}</span></div>
-                <div class="total-row"><span>Tax (${data.taxRate}%)</span><span>$${tax.toFixed(2)}</span></div>
-                <div class="total-final"><span>Total</span><span>$${total.toFixed(2)}</span></div>
+                <div class="total-row"><span>Subtotal</span><span>Rs.${subtotal.toFixed(2)}</span></div>
+                <div class="total-row"><span>Tax (${data.taxRate}%)</span><span>Rs.${tax.toFixed(2)}</span></div>
+                <div class="total-final"><span>Total</span><span>Rs.${total.toFixed(2)}</span></div>
               </div>
               ${data.notes ? `
                 <div class="notes">
@@ -321,8 +321,8 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, onBack }) 
                     <tr key={item.id} style={{ borderBottom: '1px solid #f3f3f3' }}>
                       <td className="py-3 text-xs sm:text-sm" style={{ paddingRight: '12px' }}>{item.description || '—'}</td>
                       <td className="py-3 text-xs sm:text-sm text-right" style={{ paddingRight: '12px' }}>{item.quantity}</td>
-                      <td className="py-3 text-xs sm:text-sm text-right font-mono" style={{ paddingRight: '12px' }}>${item.unitPrice.toFixed(2)}</td>
-                      <td className="py-3 text-xs sm:text-sm text-right font-mono font-semibold">${(item.quantity * item.unitPrice).toFixed(2)}</td>
+                      <td className="py-3 text-xs sm:text-sm text-right font-mono" style={{ paddingRight: '12px' }}>Rs.{item.unitPrice.toFixed(2)}</td>
+                      <td className="py-3 text-xs sm:text-sm text-right font-mono font-semibold">Rs.{(item.quantity * item.unitPrice).toFixed(2)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -333,16 +333,16 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, onBack }) 
             <div className="flex justify-end mb-8 sm:mb-10">
               <div className="w-44 sm:w-56">
                 <div className="flex justify-between py-1 text-xs sm:text-sm" style={{ color: '#777' }}>
-                  <span>Subtotal</span><span className="font-mono">${subtotal.toFixed(2)}</span>
+                  <span>Subtotal</span><span className="font-mono">Rs.{subtotal.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between py-1 text-xs sm:text-sm" style={{ color: '#777' }}>
-                  <span>Tax ({data.taxRate}%)</span><span className="font-mono">${tax.toFixed(2)}</span>
+                  <span>Tax ({data.taxRate}%)</span><span className="font-mono">Rs.{tax.toFixed(2)}</span>
                 </div>
                 <div
                   className="flex justify-between py-2 text-base sm:text-lg font-bold mt-1"
                   style={{ borderTop: '2px solid #000000', color: '#1a1a1a' }}
                 >
-                  <span>Total</span><span className="font-mono">${total.toFixed(2)}</span>
+                  <span>Total</span><span className="font-mono">Rs.{total.toFixed(2)}</span>
                 </div>
               </div>
             </div>
