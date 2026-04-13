@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import {  defaultInvoiceData, type InvoiceData } from '../types/invoice';
+import { defaultInvoiceData, type InvoiceData } from '../types/invoice';
 import { InvoiceForm } from '../components/InvoiceForm';
 import { InvoicePreview } from '../components/InvoicePreview';
 
@@ -30,7 +30,7 @@ export const Home: React.FC = () => {
             style={{ color: '#000000', letterSpacing: '-0.5px' }}
           >
             <span style={{ color: '#000000' }}>Brosh {" "}</span> Tech
-           
+
           </div>
         </div>
 

@@ -9,352 +9,360 @@ interface InvoicePreviewProps {
 export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, onBack }) => {
   const printRef = useRef<HTMLDivElement>(null);
 
-  const subtotal = data.items.reduce((s, i) => s + i.quantity * i.unitPrice, 0);
-  const tax = subtotal * (data.taxRate / 100);
-  const total = subtotal + tax;
+  const subtotalPKR = data.items.reduce((sum, item) => {
+    const t = item.quantity * Number(item.unitPrice || 0);
+    return sum + (item.currency === 'PKR' ? t : t * 290);
+  }, 0) + (data.monthlyRetainerCurrency === 'PKR'
+    ? Number(data.monthlyRetainer || 0)
+    : Number(data.monthlyRetainer || 0) * 290);
 
+  const tax = subtotalPKR * (Number(data.taxRate || 0) / 100);
+  const totalPKR = subtotalPKR + tax;
+  const fmt = (n: number) => n.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+
+  /* ─── Print handler ────────────────────────────────────────── */
   const handlePrint = () => {
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
-    if (isMobile) {
-      const style = document.createElement('style');
-      style.id = 'mobile-print-style';
-      style.innerHTML = `
-        @media print {
-          body > *:not(#mobile-print-wrapper) { display: none !important; }
-          #mobile-print-wrapper { display: block !important; position: fixed; top: 0; left: 0; width: 100%; background: white; }
-        }
-      `;
-
-      const wrapper = document.createElement('div');
-      wrapper.id = 'mobile-print-wrapper';
-      wrapper.style.cssText = 'display:none;';
-      wrapper.innerHTML = `
-        <div style="font-family:Georgia,serif; padding:32px; color:#1a1a1a; max-width:800px; margin:0 auto;">
-          <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:32px;">
+    const printHTML = `
+      <!DOCTYPE html><html>
+      <head>
+        <title>Invoice ${data.invoiceNumber}</title>
+        <meta name="viewport" content="width=device-width,initial-scale=1">
+        <style>
+          *{margin:0;padding:0;box-sizing:border-box}
+          body{font-family:Georgia,serif;background:#fff;color:#1a1a1a}
+          .wrap{max-width:800px;margin:0 auto;padding:56px 64px}
+          .accent{height:4px;background:#1a1a1a;margin-bottom:48px}
+          .header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:36px}
+          .co-name{font-size:22px;font-weight:bold;letter-spacing:-0.5px}
+          .co-sub{font-size:11px;color:#aaa;margin-top:3px}
+          .inv-word{font-size:38px;font-weight:300;letter-spacing:8px;text-transform:uppercase;text-align:right;color:#1a1a1a}
+          .inv-num{font-size:12px;font-family:monospace;color:#8a7960;text-align:right;margin-top:4px}
+          .divider{height:2px;background:#1a1a1a;margin:28px 0}
+          .parties{display:grid;grid-template-columns:1fr 1fr;gap:48px;margin-bottom:40px}
+          .p-label{font-size:9px;text-transform:uppercase;letter-spacing:3px;color:#8a7960;margin-bottom:8px;font-weight:bold}
+          .p-name{font-size:15px;font-weight:bold;margin-bottom:5px}
+          .p-detail{font-size:12px;color:#555;line-height:1.8}
+          table{width:100%;border-collapse:collapse;margin-bottom:36px}
+          thead tr{border-bottom:2px solid #1a1a1a}
+          th{font-size:9px;text-transform:uppercase;letter-spacing:2px;color:#8a7960;padding:0 0 12px;font-weight:700;text-align:left}
+          th:not(:first-child){text-align:right;padding-left:16px}
+          tbody tr{border-bottom:1px solid #f0ead8}
+          td{padding:13px 0;font-size:13px;color:#333;vertical-align:middle}
+          td:not(:first-child){text-align:right;padding-left:16px;font-family:monospace;font-size:12px}
+          .totals-wrap{display:flex;justify-content:flex-end;margin-bottom:36px}
+          .totals{width:260px;background:#1a1a1a;border-radius:12px;padding:16px 20px}
+          .t-row{display:flex;justify-content:space-between;padding:5px 0;font-size:12px;color:#bbb}
+          .t-row span:last-child{font-family:monospace}
+          .t-total{display:flex;justify-content:space-between;padding:12px 0 0;font-size:18px;font-weight:bold;color:#fff;border-top:1px solid #333;margin-top:8px}
+          .t-total span:last-child{font-family:monospace}
+          .info-row{display:flex;gap:20px;margin-top:44px}
+          .info-box{flex:1;padding:16px 20px;background:#faf9f6;border-left:3px solid #8a7960;border-radius:0 6px 6px 0}
+          .info-label{font-size:9px;text-transform:uppercase;letter-spacing:3px;color:#8a7960;margin-bottom:7px;font-weight:bold}
+          .info-text{font-size:12px;color:#555;font-style:italic;line-height:1.75;white-space:pre-wrap}
+          .footer{margin-top:56px;padding-top:18px;border-top:1px solid #e8e0cc;display:flex;justify-content:space-between}
+          .footer span{font-size:11px;color:#ccc;font-family:monospace}
+          @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}.wrap{padding:40px 48px}}
+        </style>
+      </head>
+      <body>
+        <div class="wrap">
+          <div class="accent"></div>
+          <div class="header">
             <div>
-              <div style="font-size:22px; font-weight:bold;">${data.companyName}</div>
-              <div style="font-size:12px; color:#888; margin-top:4px;">${data.companyEmail}</div>
-              <div style="font-size:12px; color:#888;">${data.companyPhone}</div>
+              <div class="co-name">${data.companyName}</div>
+              <div class="co-sub">${data.companyEmail}</div>
+              <div class="co-sub">${data.companyPhone}</div>
             </div>
-            <div style="text-align:right;">
-              <div style="font-size:28px; font-weight:300; letter-spacing:6px; text-transform:uppercase;">Invoice</div>
-              <div style="font-size:12px; color:#666; font-family:monospace; margin-top:4px;">${data.invoiceNumber}</div>
-              <div style="font-size:12px; color:#888; margin-top:8px;">Issued: ${data.issueDate}</div>
-              <div style="font-size:12px; color:#888;">Due: ${data.dueDate}</div>
+            <div>
+              <div class="inv-word">Invoice</div>
+              <div class="inv-num">${data.invoiceNumber}</div>
             </div>
           </div>
-          <div style="height:1px; background:#1a1a1a; margin-bottom:28px;"></div>
-          <div style="display:grid; grid-template-columns:1fr 1fr; gap:40px; margin-bottom:36px;">
+          <div class="divider"></div>
+          <div class="parties">
             <div>
-              <div style="font-size:9px; text-transform:uppercase; letter-spacing:3px; color:#999; margin-bottom:8px;">From</div>
-              <div style="font-weight:bold; font-size:14px;">${data.companyName}</div>
-              <div style="font-size:12px; color:#555; margin-top:4px;">${data.companyEmail}<br/>${data.companyPhone}</div>
+              <div class="p-label">From</div>
+              <div class="p-name">${data.companyName}</div>
+              <div class="p-detail">${data.companyEmail}<br>${data.companyPhone}</div>
             </div>
             <div>
-              <div style="font-size:9px; text-transform:uppercase; letter-spacing:3px; color:#999; margin-bottom:8px;">Bill To</div>
-              <div style="font-weight:bold; font-size:14px;">${data.clientName}</div>
-              <div style="font-size:12px; color:#555; margin-top:4px;">${data.clientEmail}<br/>${data.clientAddress}</div>
+              <div class="p-label">Bill To</div>
+              <div class="p-name">${data.clientName}</div>
+              <div class="p-detail">${data.clientEmail}<br>${data.clientAddress}</div>
             </div>
           </div>
-          <table style="width:100%; border-collapse:collapse; margin-bottom:28px;">
+          <table>
             <thead>
-              <tr style="border-bottom:1.5px solid #1a1a1a;">
-                <th style="font-size:9px; text-transform:uppercase; letter-spacing:2px; color:#999; padding:0 0 10px 0; text-align:left;">Description</th>
-                <th style="font-size:9px; text-transform:uppercase; letter-spacing:2px; color:#999; padding:0 0 10px 16px; text-align:right;">Qty</th>
-                <th style="font-size:9px; text-transform:uppercase; letter-spacing:2px; color:#999; padding:0 0 10px 16px; text-align:right;">Unit Price</th>
-                <th style="font-size:9px; text-transform:uppercase; letter-spacing:2px; color:#999; padding:0 0 10px 16px; text-align:right;">Amount</th>
-              </tr>
+              <tr><th>Description</th><th>Qty</th><th>Unit Price</th><th>Amount</th></tr>
             </thead>
             <tbody>
               ${data.items.map(item => `
-                <tr style="border-bottom:1px solid #f0f0f0;">
-                  <td style="padding:12px 0; font-size:13px; color:#333;">${item.description || '—'}</td>
-                  <td style="padding:12px 0 12px 16px; font-size:12px; font-family:monospace; text-align:right; color:#555;">${item.quantity}</td>
-                  <td style="padding:12px 0 12px 16px; font-size:12px; font-family:monospace; text-align:right; color:#555;">Rs.${item.unitPrice.toFixed(2)}</td>
-                  <td style="padding:12px 0 12px 16px; font-size:12px; font-family:monospace; text-align:right; font-weight:600; color:#1a1a1a;">Rs.${(item.quantity * item.unitPrice).toFixed(2)}</td>
-                </tr>
-              `).join('')}
+                <tr>
+                  <td>${item.description || '—'}</td>
+                  <td>${item.quantity}</td>
+                  <td>${item.currency === 'PKR' ? 'Rs.' : '$'}${fmt(Number(item.unitPrice || 0))}</td>
+                  <td style="font-weight:600;color:#1a1a1a">${item.currency === 'PKR' ? 'Rs.' : '$'}${fmt(Number(item.quantity || 0) * Number(item.unitPrice || 0))}</td>
+                </tr>`).join('')}
             </tbody>
           </table>
-          <div style="display:flex; justify-content:flex-end; margin-bottom:32px;">
-            <div style="width:220px;">
-              <div style="display:flex; justify-content:space-between; padding:4px 0; font-size:12px; color:#666;"><span>Subtotal</span><span style="font-family:monospace;">Rs.${subtotal.toFixed(2)}</span></div>
-              <div style="display:flex; justify-content:space-between; padding:4px 0; font-size:12px; color:#666;"><span>Tax (${data.taxRate}%)</span><span style="font-family:monospace;">Rs.${tax.toFixed(2)}</span></div>
-              <div style="display:flex; justify-content:space-between; padding:12px 0 0 0; font-size:16px; font-weight:bold; color:#1a1a1a; border-top:1.5px solid #1a1a1a; margin-top:8px;"><span>Total</span><span style="font-family:monospace;">Rs.${total.toFixed(2)}</span></div>
+          <div class="totals-wrap">
+            <div class="totals">
+              ${data.monthlyRetainer ? `<div class="t-row"><span>Monthly Retainer</span><span>${data.monthlyRetainerCurrency === 'PKR' ? 'Rs.' : '$'}${fmt(Number(data.monthlyRetainer || 0))}</span></div>` : ''}
+              <div class="t-row"><span>Subtotal</span><span>Rs.${fmt(subtotalPKR)}</span></div>
+              <div class="t-row"><span>Tax (${data.taxRate}%)</span><span>Rs.${fmt(tax)}</span></div>
+              <div class="t-total"><span>Total (PKR)</span><span>Rs.${fmt(totalPKR)}</span></div>
             </div>
           </div>
-          ${data.notes ? `
-            <div style="padding:16px 20px; background:#fafafa; border-left:2px solid #1a1a1a;">
-              <div style="font-size:9px; text-transform:uppercase; letter-spacing:3px; color:#999; margin-bottom:6px;">Notes</div>
-              <div style="font-size:12px; color:#555; font-style:italic; line-height:1.7;">${data.notes}</div>
-            </div>
-          ` : ''}
-          <div style="margin-top:48px; padding-top:16px; border-top:1px solid #f0f0f0; display:flex; justify-content:space-between;">
-            <span style="font-size:11px; color:#bbb;">Thank you for your business.</span>
-            <span style="font-size:11px; color:#bbb; font-family:monospace;">${data.invoiceNumber}</span>
+          ${data.notes || data.bankAccountDetails || data.debitCardDetails ? `
+            <div class="info-row">
+              ${data.notes ? `<div class="info-box"><div class="info-label">Notes</div><div class="info-text">${data.notes}</div></div>` : ''}
+              ${(data.bankAccountDetails || data.debitCardDetails) ? `<div class="info-box"><div class="info-label">Payment Details</div><div class="info-text">${[data.bankAccountDetails, data.debitCardDetails].filter(Boolean).join('\n\n')}</div></div>` : ''}
+            </div>` : ''}
+          <div class="footer">
+            <span>Thank you for your business.</span>
+            <span>${data.invoiceNumber}</span>
           </div>
         </div>
-      `;
+      </body></html>
+    `;
 
+    if (isMobile) {
+      const style = document.createElement('style');
+      style.id = '__inv_print_style';
+      style.innerHTML = `@media print{body>*:not(#__inv_print){display:none!important}#__inv_print{display:block!important;position:fixed;top:0;left:0;width:100%;background:#fff}}`;
+      const wrapper = document.createElement('div');
+      wrapper.id = '__inv_print';
+      wrapper.style.cssText = 'display:none;';
+      wrapper.innerHTML = printHTML;
       document.head.appendChild(style);
       document.body.appendChild(wrapper);
       window.print();
-
-      setTimeout(() => {
-        document.getElementById('mobile-print-style')?.remove();
-        document.getElementById('mobile-print-wrapper')?.remove();
-      }, 1000);
-
+      setTimeout(() => { document.getElementById('__inv_print_style')?.remove(); document.getElementById('__inv_print')?.remove(); }, 1000);
     } else {
       const win = window.open('', '_blank');
       if (!win) return;
-      win.document.write(`
-        <!DOCTYPE html>
-        <html>
-          <head>
-            <title>Invoice ${data.invoiceNumber}</title>
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <style>
-              * { margin: 0; padding: 0; box-sizing: border-box; }
-              body { font-family: 'Georgia', serif; background: #fff; color: #1a1a1a; }
-              .invoice { max-width: 800px; margin: 0 auto; padding: 56px 64px; }
-              .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px; }
-              .logo { font-size: 26px; font-weight: bold; color: #1a1a1a; letter-spacing: -0.5px; }
-              .inv-meta { text-align: right; }
-              .inv-meta h2 { font-size: 36px; color: #1a1a1a; font-weight: 300; letter-spacing: 6px; text-transform: uppercase; }
-              .inv-meta p { font-size: 12px; color: #666; margin-top: 4px; font-family: monospace; }
-              .inv-meta .dates { margin-top: 10px; }
-              .inv-meta .dates p { font-family: Georgia, serif; font-size: 12px; color: #888; }
-              .divider { height: 1px; background: #1a1a1a; margin: 32px 0; }
-              .parties { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; margin-bottom: 44px; }
-              .party-label { font-size: 9px; text-transform: uppercase; letter-spacing: 3px; color: #999; margin-bottom: 10px; }
-              .party-name { font-size: 15px; font-weight: bold; color: #1a1a1a; margin-bottom: 6px; }
-              .party-detail { font-size: 12px; color: #555; line-height: 1.8; }
-              table { width: 100%; border-collapse: collapse; margin-bottom: 36px; }
-              thead tr { border-bottom: 1.5px solid #1a1a1a; }
-              thead th { font-size: 9px; text-transform: uppercase; letter-spacing: 2px; color: #999; padding: 0 0 10px 0; text-align: left; font-weight: 600; }
-              thead th:not(:first-child) { text-align: right; padding-left: 16px; }
-              tbody tr { border-bottom: 1px solid #f0f0f0; }
-              tbody td { padding: 13px 0; font-size: 13px; color: #333; vertical-align: middle; }
-              tbody td:not(:first-child) { text-align: right; padding-left: 16px; font-family: monospace; font-size: 12px; }
-              tbody tr:last-child { border-bottom: none; }
-              .totals { margin-left: auto; width: 240px; border-top: 1px solid #e8e8e8; padding-top: 16px; }
-              .total-row { display: flex; justify-content: space-between; padding: 5px 0; font-size: 12px; color: #666; }
-              .total-row span:last-child { font-family: monospace; }
-              .total-final { display: flex; justify-content: space-between; padding: 14px 0 0 0; font-size: 17px; font-weight: bold; color: #1a1a1a; border-top: 1.5px solid #1a1a1a; margin-top: 10px; }
-              .total-final span:last-child { font-family: monospace; }
-              .notes { margin-top: 52px; padding: 20px 24px; background: #fafafa; border-left: 2px solid #1a1a1a; }
-              .notes-label { font-size: 9px; text-transform: uppercase; letter-spacing: 3px; color: #999; margin-bottom: 8px; }
-              .notes-text { font-size: 12px; color: #555; font-style: italic; line-height: 1.7; }
-              .footer { margin-top: 64px; padding-top: 20px; border-top: 1px solid #f0f0f0; display: flex; justify-content: space-between; align-items: center; }
-              .footer-left { font-size: 11px; color: #bbb; }
-              .footer-right { font-size: 11px; color: #bbb; font-family: monospace; }
-              @media print {
-                body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-                .invoice { padding: 40px 48px; }
-              }
-            </style>
-          </head>
-          <body>
-            <div class="invoice">
-              <div class="header">
-                <div class="logo">${data.companyName}</div>
-                <div class="inv-meta">
-                  <h2>Invoice</h2>
-                  <p>${data.invoiceNumber}</p>
-                  <div class="dates">
-                    <p style="margin-top:10px">Issued: ${data.issueDate}</p>
-                    <p>Due: ${data.dueDate}</p>
-                  </div>
-                </div>
-              </div>
-              <div class="divider"></div>
-              <div class="parties">
-                <div>
-                  <div class="party-label">From</div>
-                  <div class="party-name">${data.companyName}</div>
-                  <div class="party-detail">${data.companyEmail}<br/>${data.companyPhone}</div>
-                </div>
-                <div>
-                  <div class="party-label">Bill To</div>
-                  <div class="party-name">${data.clientName}</div>
-                  <div class="party-detail">${data.clientEmail}<br/>${data.clientAddress}</div>
-                </div>
-              </div>
-              <table>
-                <thead>
-                  <tr>
-                    <th>Description</th><th>Qty</th><th>Unit Price</th><th>Amount</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  ${data.items.map(item => `
-                    <tr>
-                      <td>${item.description || '—'}</td>
-                      <td style="text-align:right;padding-left:16px;font-family:monospace;font-size:12px">${item.quantity}</td>
-                      <td style="text-align:right;padding-left:16px;font-family:monospace;font-size:12px">Rs.${item.unitPrice.toFixed(2)}</td>
-                      <td style="text-align:right;padding-left:16px;font-family:monospace;font-size:12px;font-weight:600">Rs.${(item.quantity * item.unitPrice).toFixed(2)}</td>
-                    </tr>
-                  `).join('')}
-                </tbody>
-              </table>
-              <div class="totals">
-                <div class="total-row"><span>Subtotal</span><span>Rs.${subtotal.toFixed(2)}</span></div>
-                <div class="total-row"><span>Tax (${data.taxRate}%)</span><span>Rs.${tax.toFixed(2)}</span></div>
-                <div class="total-final"><span>Total</span><span>Rs.${total.toFixed(2)}</span></div>
-              </div>
-              ${data.notes ? `
-                <div class="notes">
-                  <div class="notes-label">Notes</div>
-                  <div class="notes-text">${data.notes}</div>
-                </div>
-              ` : ''}
-              <div class="footer">
-                <span class="footer-left">Thank you for your business.</span>
-                <span class="footer-right">${data.invoiceNumber}</span>
-              </div>
-            </div>
-          </body>
-        </html>
-      `);
+      win.document.write(printHTML);
       win.document.close();
       win.focus();
       setTimeout(() => { win.print(); win.close(); }, 300);
     }
   };
 
+  /* ─── render ───────────────────────────────────────────────── */
   return (
-    <div className="h-full flex flex-col bg-[#ffffff]">
-      {/* Toolbar */}
-      <div className="flex items-center justify-between px-4 sm:px-6 py-3 border-b border-[#1e1e1e] shrink-0">
+    <div className="h-full flex flex-col" style={{ background: '#f7f5f0', fontFamily: 'Georgia, serif' }}>
+
+      {/* ── toolbar ─────────────────────────────────────────── */}
+      <div
+        className="flex items-center justify-between px-5 py-3 shrink-0"
+        style={{ background: '#fff', borderBottom: '1px solid #2a2218' }}
+      >
         {onBack && (
           <button
             onClick={onBack}
-            className="lg:hidden text-xs text-[#666] hover:text-[#c8a96e] transition-colors"
+            className="lg:hidden text-xs font-bold uppercase tracking-[0.15em] transition-colors"
+            style={{ color: '#8a7a5a' }}
           >
             ← Edit
           </button>
         )}
-        <span className="text-xs text-[#444] tracking-widest uppercase">Preview</span>
+        <span className="text-xs font-bold uppercase tracking-[0.25em]" style={{ color: '#8a7a5a' }}>
+          Preview
+        </span>
         <button
           onClick={handlePrint}
-          className="bg-[#000000] text-[#ffffff] text-xs font-bold px-4 sm:px-5 py-2 rounded-lg tracking-widest uppercase transition-colors flex items-center gap-2"
+          className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.15em] px-4 py-2 rounded-lg transition-all"
+          style={{ background: '#000000', color: '#ffffff' }}
+          onMouseEnter={e => (e.currentTarget.style.background = '#000000')}
+          onMouseLeave={e => (e.currentTarget.style.background = '#000000')}
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-            <polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <polyline points="6 9 6 2 18 2 18 9" />
+            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+            <rect x="6" y="14" width="12" height="8" />
           </svg>
           <span className="hidden sm:inline">Print / PDF</span>
           <span className="sm:hidden">Print</span>
         </button>
       </div>
 
-      {/* Preview Area */}
-      <div className="flex-1 overflow-auto p-3 sm:p-4 lg:p-8 flex justify-center">
+      {/* ── preview area ────────────────────────────────────── */}
+      <div className="flex-1 overflow-auto p-4 sm:p-6 lg:p-10 flex justify-center">
         <div
           ref={printRef}
-          className="bg-white text-[#1a1a1a] w-full max-w-[720px] shadow-2xl rounded-sm"
-          style={{ fontFamily: 'Georgia, serif', minHeight: '960px' }}
+          className="bg-white w-full max-w-[740px] rounded-2xl overflow-hidden"
+          style={{
+            boxShadow: '0 4px 24px #0000000f, 0 1px 4px #0000000a',
+            border: '1px solid #e5ddd0',
+          }}
         >
-          <div className="p-6 sm:p-8 lg:p-12">
-            {/* Header */}
-            <div className="flex justify-between items-start mb-8 sm:mb-10 gap-4">
+          {/* top accent */}
+          <div style={{ height: '4px', background: '#1a1a1a' }} />
+
+          <div className="p-7 sm:p-10 lg:p-14">
+
+            {/* header */}
+            <div className="flex justify-between items-start mb-8 gap-4">
               <div className="min-w-0">
-                <div className="text-xl sm:text-2xl font-bold tracking-tight truncate" style={{ color: '#1a1a1a' }}>
+                <div className="text-xl sm:text-2xl font-bold tracking-tight truncate" style={{ color: '#1a1a1a', letterSpacing: '-0.03em' }}>
                   {data.companyName}
                 </div>
-                <div className="text-xs sm:text-sm mt-1 truncate" style={{ color: '#888' }}>{data.companyEmail}</div>
-                <div className="text-xs sm:text-sm truncate" style={{ color: '#888' }}>{data.companyPhone}</div>
+                <div className="text-xs mt-1 truncate" style={{ color: '#aaa' }}>{data.companyEmail}</div>
+                <div className="text-xs truncate" style={{ color: '#aaa' }}>{data.companyPhone}</div>
               </div>
               <div className="text-right shrink-0">
-                <div className="text-2xl sm:text-4xl font-light tracking-[4px] sm:tracking-[6px] uppercase" style={{ color: '#000000' }}>
+                <div
+                  className="text-3xl sm:text-4xl font-light uppercase"
+                  style={{ letterSpacing: '7px', color: '#1a1a1a', lineHeight: 1 }}
+                >
                   Invoice
                 </div>
-                <div className="text-xs sm:text-sm mt-1 font-mono" style={{ color: '#555' }}>{data.invoiceNumber}</div>
-                <div className="text-xs mt-2" style={{ color: '#888' }}>
-                  <span>Issued: {data.issueDate}</span>
-                  <br />
-                  <span>Due: {data.dueDate}</span>
-                </div>
+                <div className="text-xs font-mono mt-1.5" style={{ color: '#8a7960' }}>{data.invoiceNumber}</div>
               </div>
             </div>
 
-            {/* Divider */}
-            <div style={{ height: '2px', background: '#000000', marginBottom: '28px' }} />
+            {/* divider */}
+            <div style={{ height: '2px', background: '#1a1a1a', marginBottom: '28px' }} />
 
-            {/* Parties */}
-            <div className="grid grid-cols-2 gap-6 sm:gap-10 mb-8 sm:mb-10">
-              <div>
-                <div className="text-[9px] sm:text-[10px] uppercase tracking-[2px] sm:tracking-[3px] mb-2" style={{ color: '#000000' }}>From</div>
-                <div className="font-bold text-sm sm:text-base">{data.companyName}</div>
-                <div className="text-xs sm:text-sm mt-1" style={{ color: '#555', lineHeight: '1.6' }}>
-                  {data.companyEmail}<br />{data.companyPhone}
+            {/* parties */}
+            <div className="grid grid-cols-2 gap-6 sm:gap-12 mb-9">
+              {[
+                { label: 'From', name: data.companyName, email: data.companyEmail, extra: data.companyPhone },
+                { label: 'Bill To', name: data.clientName, email: data.clientEmail, extra: data.clientAddress },
+              ].map(p => (
+                <div key={p.label}>
+                  <div
+                    className="text-[9px] sm:text-[10px] uppercase font-bold mb-2"
+                    style={{ color: '#000', letterSpacing: '3px' }}
+                  >{p.label}</div>
+                  <div className="font-bold text-sm sm:text-base" style={{ color: '#1a1a1a' }}>{p.name}</div>
+                  <div className="text-xs mt-1" style={{ color: '#666', lineHeight: 1.7 }}>
+                    {p.email}<br />{p.extra}
+                  </div>
                 </div>
-              </div>
-              <div>
-                <div className="text-[9px] sm:text-[10px] uppercase tracking-[2px] sm:tracking-[3px] mb-2" style={{ color: '#000000' }}>Bill To</div>
-                <div className="font-bold text-sm sm:text-base">{data.clientName}</div>
-                <div className="text-xs sm:text-sm mt-1" style={{ color: '#555', lineHeight: '1.6' }}>
-                  {data.clientEmail}<br />{data.clientAddress}
-                </div>
-              </div>
+              ))}
             </div>
 
-            {/* Items Table */}
-            <div className="overflow-x-auto -mx-6 sm:mx-0 px-6 sm:px-0 mb-6 sm:mb-8">
+            {/* items table */}
+            <div className="overflow-x-auto -mx-7 sm:mx-0 px-7 sm:px-0 mb-6 sm:mb-8">
               <table className="w-full" style={{ borderCollapse: 'collapse', minWidth: '460px' }}>
                 <thead>
-                  <tr style={{ borderBottom: '1px solid #000000' }}>
+                  <tr style={{ borderBottom: '2px solid #1a1a1a' }}>
                     {['Description', 'Qty', 'Unit Price', 'Amount'].map((h, i) => (
                       <th
                         key={h}
-                        className="pb-2 text-[9px] sm:text-[10px] uppercase tracking-[2px]"
-                        style={{ color: '#000000', textAlign: i === 0 ? 'left' : 'right', padding: '8px 8px 8px 0', whiteSpace: 'nowrap' }}
-                      >
-                        {h}
-                      </th>
+                        className="pb-3 text-[9px] sm:text-[10px] uppercase font-bold"
+                        style={{
+                          color: '#000',
+                          letterSpacing: '2px',
+                          textAlign: i === 0 ? 'left' : 'right',
+                          padding: '8px 10px 10px 0',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >{h}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
-                  {data.items.map((item) => (
-                    <tr key={item.id} style={{ borderBottom: '1px solid #f3f3f3' }}>
-                      <td className="py-3 text-xs sm:text-sm" style={{ paddingRight: '12px' }}>{item.description || '—'}</td>
-                      <td className="py-3 text-xs sm:text-sm text-right" style={{ paddingRight: '12px' }}>{item.quantity}</td>
-                      <td className="py-3 text-xs sm:text-sm text-right font-mono" style={{ paddingRight: '12px' }}>Rs.{item.unitPrice.toFixed(2)}</td>
-                      <td className="py-3 text-xs sm:text-sm text-right font-mono font-semibold">Rs.{(item.quantity * item.unitPrice).toFixed(2)}</td>
+                  {data.items.map((item, idx) => (
+                    <tr
+                      key={item.id}
+                      style={{ borderBottom: '1px solid #f0ead8', background: idx % 2 === 0 ? 'transparent' : '#fafaf8' }}
+                    >
+                      <td className="py-3 text-xs sm:text-sm pr-3" style={{ color: '#1a1a1a' }}>{item.description || '—'}</td>
+                      <td className="py-3 text-xs text-right font-mono pr-3" style={{ color: '#666' }}>{item.quantity}</td>
+                      <td className="py-3 text-xs text-right font-mono pr-3" style={{ color: '#666' }}>
+                        {item.currency === 'PKR' ? 'Rs.' : '$'}{fmt(Number(item.unitPrice || 0))}
+                      </td>
+                      <td className="py-3 text-xs text-right font-mono font-bold" style={{ color: '#1a1a1a' }}>
+                        {item.currency === 'PKR' ? 'Rs.' : '$'}{fmt(Number(item.quantity || 0) * Number(item.unitPrice || 0))}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
 
-            {/* Totals */}
+            {/* totals */}
             <div className="flex justify-end mb-8 sm:mb-10">
-              <div className="w-44 sm:w-56">
-                <div className="flex justify-between py-1 text-xs sm:text-sm" style={{ color: '#777' }}>
-                  <span>Subtotal</span><span className="font-mono">Rs.{subtotal.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between py-1 text-xs sm:text-sm" style={{ color: '#777' }}>
-                  <span>Tax ({data.taxRate}%)</span><span className="font-mono">Rs.{tax.toFixed(2)}</span>
-                </div>
-                <div
-                  className="flex justify-between py-2 text-base sm:text-lg font-bold mt-1"
-                  style={{ borderTop: '2px solid #000000', color: '#1a1a1a' }}
-                >
-                  <span>Total</span><span className="font-mono">Rs.{total.toFixed(2)}</span>
+              <div
+                className="w-64 sm:w-72 rounded-2xl overflow-hidden"
+                style={{ background: '#1a1a1a' }}
+              >
+                <div className="px-5 py-4 space-y-1.5">
+                  {data.monthlyRetainer ? (
+                    <div className="flex justify-between text-xs" style={{ color: '#bbb' }}>
+                      <span>Monthly Retainer</span>
+                      <span className="font-mono">
+                        {data.monthlyRetainerCurrency === 'PKR' ? 'Rs.' : '$'}{fmt(Number(data.monthlyRetainer || 0))}
+                      </span>
+                    </div>
+                  ) : null}
+                  <div className="flex justify-between text-xs" style={{ color: '#fff' }}>
+                    <span>Subtotal</span><span className="font-mono">Rs.{fmt(subtotalPKR)}</span>
+                  </div>
+                  <div className="flex justify-between text-xs" style={{ color: '#fff' }}>
+                    <span>Tax ({data.taxRate}%)</span><span className="font-mono">Rs.{fmt(tax)}</span>
+                  </div>
+                  <div
+                    className="flex justify-between text-lg sm:text-xl font-bold pt-3 mt-1"
+                    style={{ borderTop: '1px solid #333', color: '#fff' }}
+                  >
+                    <span>Total (PKR)</span><span className="font-mono">Rs.{fmt(totalPKR)}</span>
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* Notes */}
-            {data.notes && (
-              <div className="p-3 sm:p-4 rounded" style={{ background: '#fdf9ef', borderLeft: '3px solid #000000' }}>
-                <div className="text-[9px] sm:text-[10px] uppercase tracking-[2px] mb-1" style={{ color: '#000000' }}>Notes</div>
-                <div className="text-xs sm:text-sm italic" style={{ color: '#666' }}>{data.notes}</div>
+            {/* notes & payment info */}
+            {(data.notes || data.bankAccountDetails || data.debitCardDetails) && (
+              <div className="flex flex-col sm:flex-row gap-3 mt-8">
+                {data.notes && (
+                  <div
+                    className="flex-1 p-4 rounded-r-xl"
+                    style={{ background: '#faf9f6', borderLeft: '3px solid #000' }}
+                  >
+                    <div
+                      className="text-[9px] uppercase font-bold tracking-[3px] mb-2"
+                      style={{ color: '#000000' }}
+                    >Notes</div>
+                    <div className="text-xs italic" style={{ color: '#666', lineHeight: 1.75 }}>{data.notes}</div>
+                  </div>
+                )}
+                {(data.bankAccountDetails || data.debitCardDetails) && (
+                  <div
+                    className="flex-1 p-4 rounded-r-xl"
+                    style={{ background: '#faf9f6', borderLeft: '3px solid #000000' }}
+                  >
+                    <div
+                      className="text-[9px] uppercase font-bold tracking-[3px] mb-2"
+                      style={{ color: '#000000' }}
+                    >Payment Details</div>
+                    <div className="text-xs italic whitespace-pre-wrap" style={{ color: '#666', lineHeight: 1.75 }}>
+                      {[data.bankAccountDetails, data.debitCardDetails].filter(Boolean).join('\n\n')}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
+
+            {/* footer */}
+            <div
+              className="mt-14 pt-4 flex justify-between items-center"
+              style={{ borderTop: '1px solid #ede8dc' }}
+            >
+              <span className="text-xs" style={{ color: '#ccc', fontStyle: 'italic' }}>
+                Thank you for your business.
+              </span>
+              <span className="text-xs font-mono" style={{ color: '#ccc' }}>{data.invoiceNumber}</span>
+            </div>
+
           </div>
+
+          {/* bottom accent */}
+          <div style={{ height: '4px', background: '#1a1a1a' }} />
         </div>
       </div>
     </div>
