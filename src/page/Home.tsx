@@ -21,7 +21,7 @@ export const Home: React.FC = () => {
     >
       {/* Top Nav */}
       <header
-        className="flex items-center justify-between px-6 py-4 border-b"
+        className="flex items-center justify-between px-6 py-4 border-b print:hidden"
         style={{ borderColor: '#1a1a1a', background: '#ffffff' }}
       >
         <div className="flex items-center gap-3">
@@ -64,7 +64,7 @@ export const Home: React.FC = () => {
         <div
           className={`
             ${activeTab === 'form' ? 'flex' : 'hidden'} lg:flex
-            flex-col w-full lg:w-[45%] border-r
+            flex-col w-full lg:w-[45%] border-r print:hidden
           `}
           style={{ borderColor: '#1a1a1a', background: '#ffffff', overflow: 'hidden' }}
         >
@@ -79,7 +79,7 @@ export const Home: React.FC = () => {
         <div
           className={`
             ${activeTab === 'preview' ? 'flex' : 'hidden'} lg:flex
-            flex-col flex-1
+            flex-col flex-1 print:p-0 print:bg-white
           `}
           style={{ background: '#111', overflow: 'hidden' }}
         >
