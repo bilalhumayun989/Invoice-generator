@@ -21,7 +21,6 @@ export interface InvoiceData {
   bankName: string;
   accountTitle: string;
   accountNumber: string;
-  paymentMethod: string;
   oneTimeCurrency: 'USD' | 'PKR';
   monthlyCurrency: 'USD' | 'PKR';
   billingType: 'one-time' | 'monthly-retainer';
@@ -50,7 +49,6 @@ export const defaultInvoiceData: InvoiceData = {
   bankName: 'International Commerce Bank',
   accountTitle: 'Editorial Precision Systems',
   accountNumber: 'GB12 ICBK 6016 1331 9283 74',
-  paymentMethod: 'Credit Card',
   oneTimeCurrency: 'USD',
   monthlyCurrency: 'PKR',
   billingType: 'monthly-retainer',

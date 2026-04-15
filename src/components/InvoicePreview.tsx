@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import type { InvoiceData } from '../types/invoice';
 
 interface InvoicePreviewProps {
@@ -387,14 +387,6 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data }) => {
                             ${data.clientPhone}
                         </div>
                     </div>
-                    <div class="info-card">
-                        <h3>Payment Method</h3>
-                        <div class="name">${data.paymentMethod}</div>
-                        <div class="details">
-                            Bank: ${data.bankName}<br/>
-                            Account: ${data.accountNumber}
-                        </div>
-                    </div>
                 </div>
 
                 <section class="billing-section">
@@ -453,16 +445,8 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data }) => {
                             <div class="val">${data.bankName}</div>
                         </div>
                         <div class="account-item">
-                            <div class="label">Account Title</div>
-                            <div class="val">${data.accountTitle}</div>
-                        </div>
-                        <div class="account-item">
                             <div class="label">Account Number</div>
                             <div class="val">${data.accountNumber}</div>
-                        </div>
-                        <div class="account-item">
-                            <div class="label">Payment Method</div>
-                            <div class="val">${data.paymentMethod}</div>
                         </div>
                     </div>
                 </section>
@@ -598,16 +582,7 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data }) => {
               <p className="mt-1 sm:mt-2 text-sm leading-7 text-slate-600">{data.bankName}</p>
             </div>
             <div>
-              <p className="text-[9px] sm:text-[11px] uppercase tracking-[0.25em] text-slate-500">Payment Method</p>
-              <p className="mt-2 text-sm leading-7 text-slate-600">{data.paymentMethod}</p>
-            </div>
-            <div>
-              <p className="text-[11px] uppercase tracking-[0.25em] text-slate-500">Account Title</p>
-              <p className="mt-2 text-sm leading-7 text-slate-600">{data.accountTitle}</p>
-            </div>
-            <div>
-              <p className="text-[11px] uppercase tracking-[0.25em] text-slate-500">Account Number</p>
-              <p className="mt-2 text-sm leading-7 text-slate-600">{data.accountNumber}</p>
+
             </div>
           </div>
         </div>

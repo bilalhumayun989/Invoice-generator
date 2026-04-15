@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { defaultInvoiceData, type InvoiceData } from '../types/invoice';
 import { InvoiceForm } from '../components/InvoiceForm';
 import { InvoicePreview } from '../components/InvoicePreview';
@@ -53,7 +53,6 @@ export const Home: React.FC = () => {
         {showPreview && (
           <section className="glass-card rounded-[1.25rem] p-4 sm:p-8 shadow-2xl border border-white/30">
             <div className="flex items-center gap-3 mb-6">
-              <span className="material-symbols-outlined text-slate-950">description</span>
               <div>
                 <h2 className="font-headline text-lg font-bold">Invoice Review</h2>
                 <p className="text-sm text-slate-500">Preview of your invoice details below.</p>

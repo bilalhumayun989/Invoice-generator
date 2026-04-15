@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import type { InvoiceData } from '../types/invoice';
 
 interface InvoiceFormProps {
@@ -175,25 +175,12 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({ data, onChange }) => {
               placeholder="GB12 ICBK 6016 1331 9283 74"
             />
           </div>
-          <div>
-            <label className={LABEL}>Payment Method</label>
-            <select
-              className={INPUT}
-              value={data.paymentMethod}
-              onChange={e => set('paymentMethod', e.target.value)}
-            >
-              {/* <option>Wire Transfer</option> */}
-              {/* <option>ACH</option> */}
-              <option>Credit Card</option>
-              <option>Cash</option>
-            </select>
-          </div>
         </div>
       </SectionCard>
 
       <SectionCard title="Billing & Currency" description="Add one-time and monthly retainer amounts with separate currencies.">
-        <div className="grid gap-6 lg:grid-cols-2">
-          <div className="rounded-[18px] border border-slate-200 bg-white p-6">
+        <div className="grid gap-5 grid-cols-1 md:grid-cols-2">
+          <div className="w-full min-w-0 rounded-[18px] border border-slate-200 bg-white p-5 sm:p-6">
             <p className="text-xs uppercase tracking-[0.35em] text-slate-500">One-time Invoice</p>
             <div className="mt-4 space-y-4">
               <div>
@@ -230,7 +217,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({ data, onChange }) => {
             </div>
           </div>
 
-          <div className="rounded-[18px] border border-slate-200 bg-white p-6">
+          <div className="w-full min-w-0 rounded-[18px] border border-slate-200 bg-white p-5 sm:p-6">
             <p className="text-xs uppercase tracking-[0.35em] text-slate-500">Monthly Retainer</p>
             <div className="mt-4 space-y-4">
               <div>
