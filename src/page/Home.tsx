@@ -1,90 +1,69 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+﻿import React, { useState } from 'react';
 import { defaultInvoiceData, type InvoiceData } from '../types/invoice';
 import { InvoiceForm } from '../components/InvoiceForm';
 import { InvoicePreview } from '../components/InvoicePreview';
 
-type Tab = 'form' | 'preview';
-
 export const Home: React.FC = () => {
   const [data, setData] = useState<InvoiceData>(defaultInvoiceData);
-  const [activeTab, setActiveTab] = useState<Tab>('form');
+  const [showPreview, setShowPreview] = useState(false);
 
   return (
-    <div
-      className="min-h-screen flex flex-col"
-      style={{
-        background: '#080808',
-        fontFamily: "'Georgia', serif",
-        color: '#000000',
-      }}
-    >
-      {/* Top Nav */}
-      <header
-        className="flex items-center justify-between px-6 py-4 border-b print:hidden"
-        style={{ borderColor: '#1a1a1a', background: '#ffffff' }}
-      >
-        <div className="flex items-center gap-3">
-          <div
-            className="text-xl sm:text-2xl font-bold tracking-tight"
-            style={{ color: '#000000', letterSpacing: '-0.5px' }}
+    <div className="min-h-screen bg-slate-50 text-slate-950 font-body">
+      <div className="noise-overlay"></div>
+      <nav className="fixed top-0 left-0 z-50 w-full border-b border-slate-200 shadow-[0_8px_32px_0_rgba(0,0,0,0.04)] bg-white/80 backdrop-blur-xl print:hidden">
+        <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-6 py-4">
+          <div className="flex items-center gap-6">
+            <span className="text-xl font-bold tracking-tighter text-slate-950 font-headline">Broshtech Invoice</span>
+         
+          </div>
+          <button className="rounded-full bg-slate-950 px-5 py-2 text-sm font-bold text-white transition hover:bg-black">
+            Download PDF
+          </button>
+        </div>
+      </nav>
+
+      <main className="mx-auto flex min-h-screen max-w-7xl flex-col gap-12 px-6 pb-24 pt-32 sm:px-8">
+        <header className="text-center">
+          <p className="text-sm uppercase tracking-[0.35em] text-slate-500">Creation Workspace</p>
+          <h1 className="mt-4 text-5xl font-black tracking-tight text-slate-950 sm:text-6xl">New Invoice</h1>
+        </header>
+
+       
+
+        <section className="glass-card rounded-[1.25rem] p-8 shadow-2xl border border-white/30">
+          <div className="flex items-center gap-3 mb-6">
+            <div>
+              <h2 className="font-headline text-lg font-bold">Billing & Company</h2>
+              <p className="text-sm text-slate-500">Enter your invoice details here.</p>
+            </div>
+          </div>
+          <InvoiceForm data={data} onChange={setData} />
+        </section>
+
+        <div className="flex justify-center print:hidden">
+          <button
+            type="button"
+            onClick={() => setShowPreview(true)}
+            className="rounded-[1rem] bg-slate-950 px-10 py-4 text-sm font-semibold uppercase tracking-[0.16em] text-white transition hover:bg-black"
           >
-            <span style={{ color: '#000000' }}>Brosh {" "}</span> Tech
-
-          </div>
+            Generate Invoice Preview
+          </button>
         </div>
 
-        {/* Mobile tab switcher */}
-        <div className="flex lg:hidden rounded-lg overflow-hidden border" style={{ borderColor: '#2a2a2a' }}>
-          {(['form', 'preview'] as Tab[]).map(tab => (
-            <Link
-              key={tab}
-              to="#"
-              onClick={() => setActiveTab(tab)}
-              className="px-4 py-1.5 text-xs uppercase tracking-widest font-semibold transition-all"
-              style={{
-                background: activeTab === tab ? '#000000' : 'transparent',
-                color: activeTab === tab ? '#ffffff' : '#666',
-              }}
-            >
-              {tab === 'form' ? 'Edit' : 'Preview'}
-            </Link>
-          ))}
-        </div>
-
-        <div className="hidden lg:flex items-center gap-2 text-xs" style={{ color: '#444' }}>
-          <span className="w-2 h-2 rounded-full bg-green-500 inline-block" />
-          Live Preview
-        </div>
-      </header>
-
-      {/* Main Layout */}
-      <main className="flex-1 flex overflow-hidden" style={{ height: 'calc(100vh - 57px)' }}>
-        {/* Left: Form */}
-        <div
-          className={`
-            ${activeTab === 'form' ? 'flex' : 'hidden'} lg:flex
-            flex-col w-full lg:w-[45%] border-r print:hidden
-          `}
-          style={{ borderColor: '#1a1a1a', background: '#ffffff', overflow: 'hidden' }}
-        >
-          <div className="px-6 py-3  sm:py-5 border-b flex items-center gap-2" style={{ borderColor: '#1a1a1a' }}>
-            <div className="w-2 h-2 rounded-full" style={{ background: '#000000' }} />
-            <span className="text-xs uppercase tracking-[3px]" style={{ color: '#000' }}>Invoice Editor</span>
-          </div>
-          <InvoiceForm data={data} onChange={setData} onPreview={() => setActiveTab('preview')} />
-        </div>
-
-        {/* Right: Preview */}
-        <div
-          className={`
-            ${activeTab === 'preview' ? 'flex' : 'hidden'} lg:flex
-            flex-col flex-1 print:p-0 print:bg-white
-          `}
-          style={{ background: '#111', overflow: 'hidden' }}
-        >
-          <InvoicePreview data={data} onBack={() => setActiveTab('form')} />
-        </div>
+        {showPreview && (
+          <section className="glass-card rounded-[1.25rem] p-8 shadow-2xl border border-white/30">
+            <div className="flex items-center gap-3 mb-6">
+              <span className="material-symbols-outlined text-slate-950">description</span>
+              <div>
+                <h2 className="font-headline text-lg font-bold">Invoice Review</h2>
+                <p className="text-sm text-slate-500">Preview of your invoice details below.</p>
+              </div>
+            </div>
+            <div className="rounded-[1.25rem] bg-white p-6 shadow-inner">
+              <InvoicePreview data={data} />
+            </div>
+          </section>
+        )}
       </main>
     </div>
   );

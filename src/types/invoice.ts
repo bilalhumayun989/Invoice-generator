@@ -11,37 +11,57 @@ export interface InvoiceData {
   issueDate: string;
   dueDate: string;
   companyName: string;
+  companyAddress: string;
   companyEmail: string;
   companyPhone: string;
   clientName: string;
   clientEmail: string;
+  clientPhone: string;
   clientAddress: string;
+  bankName: string;
+  accountTitle: string;
+  accountNumber: string;
+  paymentMethod: string;
+  oneTimeCurrency: 'USD' | 'PKR';
+  monthlyCurrency: 'USD' | 'PKR';
+  billingType: 'one-time' | 'monthly-retainer';
+  oneTimeAmount: string;
+  oneTimeDescription: string;
+  monthlyAmount: string;
+  billingMonth: string;
+  monthlyDescription: string;
   items: InvoiceItem[];
   taxRate: number;
   notes: string;
-  bankAccountDetails: string;
-  debitCardDetails: string;
-  monthlyRetainer: number;
-  monthlyRetainerCurrency: 'USD' | 'PKR';
 }
 
 export const defaultInvoiceData: InvoiceData = {
-  invoiceNumber: 'INV-001',
+  invoiceNumber: 'INV-2024-001',
   issueDate: new Date().toISOString().split('T')[0],
   dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-  companyName: 'BroshTech',
+  companyName: 'BROSHTECH ',
+  companyAddress: '113 Mall of, Zia Colony Nasar Ullah Khan Town, Faisalabad',
   companyEmail: 'info@broshtech.com',
-  companyPhone: '+1 (555) 123-4567',
-  clientName: 'Client Name',
-  clientEmail: 'client@example.com',
-  clientAddress: 'Address Line',
+  companyPhone: '+1 (555) 000-0000',
+  clientName: 'Modernist Architectures Inc.',
+  clientEmail: 'contact@modernist.arch',
+  clientPhone: '+44 20 7946 0000',
+  clientAddress: 'The Glass Tower, 5th Floor, London SE1 9SG',
+  bankName: 'International Commerce Bank',
+  accountTitle: 'Editorial Precision Systems',
+  accountNumber: 'GB12 ICBK 6016 1331 9283 74',
+  paymentMethod: 'Credit Card',
+  oneTimeCurrency: 'USD',
+  monthlyCurrency: 'PKR',
+  billingType: 'monthly-retainer',
+  oneTimeAmount: '',
+  oneTimeDescription: 'Consulting and service fee',
+  monthlyAmount: '5000',
+  billingMonth: 'January 2024',
+  monthlyDescription: 'Design Strategy & Editorial Direction Retainer',
   items: [
-    { id: '1', description: 'Web Development', quantity: 1, currency: 'USD', unitPrice: 1000 }
+    { id: '1', description: 'Design Strategy & Editorial Direction', quantity: 1, currency: 'USD', unitPrice: 5000 }
   ],
   taxRate: 0,
   notes: 'Thank you for your business!',
-  bankAccountDetails: '',
-  debitCardDetails: '',
-  monthlyRetainer: 0,
-  monthlyRetainerCurrency: 'USD',
 };

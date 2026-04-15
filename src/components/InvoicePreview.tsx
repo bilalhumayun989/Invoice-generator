@@ -1,368 +1,638 @@
-import React, { useRef } from 'react';
+import React from 'react';
 import type { InvoiceData } from '../types/invoice';
 
 interface InvoicePreviewProps {
   data: InvoiceData;
-  onBack?: () => void;
 }
 
-export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, onBack }) => {
-  const printRef = useRef<HTMLDivElement>(null);
+export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data }) => {
+  const parseAmount = (value: string) => Number(value.replace(/,/g, '')) || 0;
+  const formatAmount = (value: number) => value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-  const subtotalPKR = data.items.reduce((sum, item) => {
-    const t = item.quantity * Number(item.unitPrice || 0);
-    return sum + (item.currency === 'PKR' ? t : t * 290);
-  }, 0) + (data.monthlyRetainerCurrency === 'PKR'
-    ? Number(data.monthlyRetainer || 0)
-    : Number(data.monthlyRetainer || 0) * 290);
+  const oneTimeValue = parseAmount(data.oneTimeAmount);
+  const monthlyValue = parseAmount(data.monthlyAmount);
+  const oneTimeCurrency = data.oneTimeCurrency;
+  const monthlyCurrency = data.monthlyCurrency;
+  const exchangeRate = 290;
+  const convertToPKR = (value: number, currency: 'USD' | 'PKR') => currency === 'USD' ? value * exchangeRate : value;
+  const oneTimePKR = convertToPKR(oneTimeValue, oneTimeCurrency);
+  const monthlyPKR = convertToPKR(monthlyValue, monthlyCurrency);
+  const totalPKR = oneTimePKR + monthlyPKR;
 
-  const tax = subtotalPKR * (Number(data.taxRate || 0) / 100);
-  const totalPKR = subtotalPKR + tax;
-  const fmt = (n: number) => n.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
-
-  /* ─── Print handler ────────────────────────────────────────── */
   const handlePrint = () => {
-    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <title>Invoice ${data.invoiceNumber}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #0f172a;
+            --accent: #38bdf8;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --bg-light: #f8fafc;
+        }
 
-    const printHTML = `
-      <!DOCTYPE html><html>
-      <head>
-        <title>Invoice ${data.invoiceNumber}</title>
-        <meta name="viewport" content="width=device-width,initial-scale=1">
-        <style>
-          *{margin:0;padding:0;box-sizing:border-box}
-          body{font-family:Georgia,serif;background:#fff;color:#1a1a1a}
-          .wrap{max-width:800px;margin:0 auto;padding:56px 64px}
-          .accent{height:4px;background:#1a1a1a;margin-bottom:48px}
-          .header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:36px}
-          .co-name{font-size:22px;font-weight:bold;letter-spacing:-0.5px}
-          .co-sub{font-size:11px;color:#aaa;margin-top:3px}
-          .inv-word{font-size:38px;font-weight:300;letter-spacing:8px;text-transform:uppercase;text-align:right;color:#1a1a1a}
-          .inv-num{font-size:12px;font-family:monospace;color:#8a7960;text-align:right;margin-top:4px}
-          .divider{height:2px;background:#1a1a1a;margin:28px 0}
-          .parties{display:grid;grid-template-columns:1fr 1fr;gap:48px;margin-bottom:40px}
-          .p-label{font-size:9px;text-transform:uppercase;letter-spacing:3px;color:#8a7960;margin-bottom:8px;font-weight:bold}
-          .p-name{font-size:15px;font-weight:bold;margin-bottom:5px}
-          .p-detail{font-size:12px;color:#555;line-height:1.8}
-          table{width:100%;border-collapse:collapse;margin-bottom:36px}
-          thead tr{border-bottom:2px solid #1a1a1a}
-          th{font-size:9px;text-transform:uppercase;letter-spacing:2px;color:#8a7960;padding:0 0 12px;font-weight:700;text-align:left}
-          th:not(:first-child){text-align:right;padding-left:16px}
-          tbody tr{border-bottom:1px solid #f0ead8}
-          td{padding:13px 0;font-size:13px;color:#333;vertical-align:middle}
-          td:not(:first-child){text-align:right;padding-left:16px;font-family:monospace;font-size:12px}
-          .totals-wrap{display:flex;justify-content:flex-end;margin-bottom:36px}
-          .totals{width:260px;background:#1a1a1a;border-radius:12px;padding:16px 20px}
-          .t-row{display:flex;justify-content:space-between;padding:5px 0;font-size:12px;color:#bbb}
-          .t-row span:last-child{font-family:monospace}
-          .t-total{display:flex;justify-content:space-between;padding:12px 0 0;font-size:18px;font-weight:bold;color:#fff;border-top:1px solid #333;margin-top:8px}
-          .t-total span:last-child{font-family:monospace}
-          .info-row{display:flex;gap:20px;margin-top:44px}
-          .info-box{flex:1;padding:16px 20px;background:#faf9f6;border-left:3px solid #8a7960;border-radius:0 6px 6px 0}
-          .info-label{font-size:9px;text-transform:uppercase;letter-spacing:3px;color:#8a7960;margin-bottom:7px;font-weight:bold}
-          .info-text{font-size:12px;color:#555;font-style:italic;line-height:1.75;white-space:pre-wrap}
-          .footer{margin-top:56px;padding-top:18px;border-top:1px solid #e8e0cc;display:flex;justify-content:space-between}
-          .footer span{font-size:11px;color:#ccc;font-family:monospace}
-          @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}.wrap{padding:40px 48px}}
-        </style>
-      </head>
-      <body>
-        <div class="wrap">
-          <div class="accent"></div>
-          <div class="header">
-            <div>
-              <div class="co-name">${data.companyName}</div>
-              <div class="co-sub">${data.companyEmail}</div>
-              <div class="co-sub">${data.companyPhone}</div>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { 
+            font-family: 'Montserrat', sans-serif; 
+            background: #f1f5f9; 
+            color: var(--text-main);
+            line-height: 1.5;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        .page-wrapper {
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .invoice-container {
+            width: 100%;
+            max-width: 850px;
+            min-height: 297mm; /* Full A4 height */
+            background: #ffffff;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+            border-radius: 16px;
+            overflow: hidden;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Top Accent Bar */
+        .top-bar {
+            height: 6px;
+            background: linear-gradient(90deg, #0f172a 0%, #38bdf8 100%);
+        }
+
+        .header {
+            padding: 30px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            background: #ffffff;
+        }
+
+        .company-info .label {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--accent);
+            margin-bottom: 6px;
+        }
+
+        .company-name {
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--primary);
+            margin-bottom: 8px;
+        }
+
+        .company-details {
+            font-size: 12px;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        .invoice-meta {
+            text-align: right;
+        }
+
+        .invoice-label {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            color: var(--text-muted);
+        }
+
+        .invoice-number {
+            font-size: 32px;
+            font-weight: 800;
+            color: var(--primary);
+            margin: 2px 0 8px;
+        }
+
+        .date-badge {
+            display: inline-block;
+            background: var(--bg-light);
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            color: var(--text-main);
+            border: 1px solid var(--border);
+        }
+
+        .content-body {
+            padding: 0 40px 30px;
+            flex-grow: 1; /* Pushes footer down if content is short */
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .info-card {
+            padding: 18px;
+            background: var(--bg-light);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+
+        .info-card h3 {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 6px;
+        }
+
+        .info-card .name {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 6px;
+        }
+
+        .info-card .details {
+            font-size: 12px;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        .billing-section {
+            margin-bottom: 25px;
+        }
+
+        .section-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-title::after {
+            content: "";
+            flex: 1;
+            height: 1px;
+            background: var(--border);
+        }
+
+        .billing-item {
+            background: #ffffff;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 16px;
+            margin-bottom: 12px;
+        }
+
+        .billing-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .billing-tag {
+            font-size: 9px;
+            font-weight: 700;
+            text-transform: uppercase;
+            padding: 3px 8px;
+            background: var(--primary);
+            color: #fff;
+            border-radius: 4px;
+        }
+
+        .billing-item.monthly .billing-tag {
+            background: #10b981;
+        }
+
+        .billing-price {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .billing-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            margin-bottom: 4px;
+        }
+
+        .billing-desc {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px dashed var(--border);
+            font-size: 12px;
+            color: var(--text-muted);
+            font-style: italic;
+        }
+
+        .account-details {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            padding: 20px;
+            background: var(--primary);
+            color: #fff;
+            border-radius: 12px;
+            margin-bottom: 25px;
+        }
+
+        .account-item .label {
+            font-size: 9px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: #94a3b8;
+            margin-bottom: 3px;
+        }
+
+        .account-item .val {
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .total-container {
+            background: var(--bg-light);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+        }
+
+        .total-row {
+            display: flex;
+            gap: 30px;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .total-row .label {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .total-row .val {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .total-row.grand {
+            margin-top: 8px;
+            padding-top: 12px;
+            border-top: 2px solid var(--border);
+        }
+
+        .total-row.grand .label {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .total-row.grand .val {
+            font-size: 24px;
+            font-weight: 800;
+            color: #0c3721;
+        }
+
+        .conversion-note {
+            font-size: 10px;
+            color: var(--text-muted);
+            margin-top: 10px;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 20px 0;
+            border-top: 1px solid var(--border);
+            background: var(--bg-light);
+            margin-top: auto; /* Pushes to bottom */
+        }
+
+        .thanks {
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--primary);
+        }
+
+        @media print {
+            body { background: #fff; padding: 0; margin: 0; }
+            .page-wrapper { padding: 0; }
+            .invoice-container { 
+                box-shadow: none; 
+                border-radius: 0; 
+                max-width: 100%; 
+                min-height: 100vh;
+                height: 297mm;
+            }
+            @page { size: A4; margin: 0; }
+        }
+    </style>
+</head>
+<body>
+    <div class="page-wrapper">
+        <div class="invoice-container">
+            <div class="top-bar"></div>
+            
+            <header class="header">
+                <div class="company-info">
+                    <div class="label">From</div>
+                    <h1 class="company-name">${data.companyName}</h1>
+                    <div class="company-details">
+                        ${data.companyAddress.replace(/\n/g, '<br/>')}<br/>
+                        ${data.companyEmail} &nbsp;|&nbsp; ${data.companyPhone}
+                    </div>
+                </div>
+                <div class="invoice-meta">
+                    <div class="invoice-label">Invoice</div>
+                    <div class="invoice-number">${data.invoiceNumber}</div>
+                    <!-- <div class="date-badge">
+                        Issued: <strong>${data.issueDate}</strong> &nbsp;•&nbsp; Due: <strong>${data.dueDate}</strong>
+                    </div> -->
+                </div>
+            </header>
+
+            <div class="content-body">
+                <div class="grid-2">
+                    <div class="info-card">
+                        <h3>Bill To</h3>
+                        <div class="name">${data.clientName}</div>
+                        <div class="details">
+                            ${data.clientAddress.replace(/\n/g, '<br/>')}<br/>
+                            ${data.clientEmail}<br/>
+                            ${data.clientPhone}
+                        </div>
+                    </div>
+                    <div class="info-card">
+                        <h3>Payment Method</h3>
+                        <div class="name">${data.paymentMethod}</div>
+                        <div class="details">
+                            Bank: ${data.bankName}<br/>
+                            Account: ${data.accountNumber}
+                        </div>
+                    </div>
+                </div>
+
+                <section class="billing-section">
+                    <div class="section-title">Billing Details</div>
+                    
+                    ${oneTimeValue > 0 ? `
+                        <div class="billing-item">
+                            <div class="billing-header">
+                                <span class="billing-tag">One-time Service</span>
+                                <span class="billing-price">${oneTimeCurrency === 'USD' ? '$' : 'PKR '}${formatAmount(oneTimeValue)}</span>
+                            </div>
+                            ${oneTimeCurrency === 'USD' ? `
+                                <div class="billing-row">
+                                    <span>Exchange Rate</span>
+                                    <span>1 USD = ${exchangeRate} PKR</span>
+                                </div>
+                                <div class="billing-row">
+                                    <span>Amount in PKR</span>
+                                    <strong>PKR ${formatAmount(oneTimePKR)}</strong>
+                                </div>
+                            ` : ''}
+                            ${data.oneTimeDescription ? `<div class="billing-desc">${data.oneTimeDescription}</div>` : ''}
+                        </div>
+                    ` : ''}
+
+                    ${monthlyValue > 0 ? `
+                        <div class="billing-item monthly">
+                            <div class="billing-header">
+                                <span class="billing-tag">Monthly Retainer</span>
+                                <span class="billing-price">${monthlyCurrency === 'USD' ? '$' : 'PKR '}${formatAmount(monthlyValue)}</span>
+                            </div>
+                            <div class="billing-row">
+                                <span>Billing Period</span>
+                                <span>${data.billingMonth || 'Current Month'}</span>
+                            </div>
+                            ${monthlyCurrency === 'USD' ? `
+                                <div class="billing-row">
+                                    <span>Exchange Rate</span>
+                                    <span>1 USD = ${exchangeRate} PKR</span>
+                                </div>
+                                <div class="billing-row">
+                                    <span>Amount in PKR</span>
+                                    <strong>PKR ${formatAmount(monthlyPKR)}</strong>
+                                </div>
+                            ` : ''}
+                            ${data.monthlyDescription ? `<div class="billing-desc">${data.monthlyDescription}</div>` : ''}
+                        </div>
+                    ` : ''}
+                </section>
+
+                <section class="billing-section">
+                    <div class="section-title">Account Information</div>
+                    <div class="account-details">
+                        <div class="account-item">
+                            <div class="label">Bank Name</div>
+                            <div class="val">${data.bankName}</div>
+                        </div>
+                        <div class="account-item">
+                            <div class="label">Account Title</div>
+                            <div class="val">${data.accountTitle}</div>
+                        </div>
+                        <div class="account-item">
+                            <div class="label">Account Number</div>
+                            <div class="val">${data.accountNumber}</div>
+                        </div>
+                        <div class="account-item">
+                            <div class="label">Payment Method</div>
+                            <div class="val">${data.paymentMethod}</div>
+                        </div>
+                    </div>
+                </section>
+
+                <div class="total-container">
+                    ${oneTimeValue > 0 ? `
+                        <div class="total-row">
+                            <span class="label">One-time Services</span>
+                            <span class="val">PKR ${formatAmount(oneTimePKR)}</span>
+                        </div>
+                    ` : ''}
+                    ${monthlyValue > 0 ? `
+                        <div class="total-row">
+                            <span class="label">Monthly Subtotal</span>
+                            <span class="val">PKR ${formatAmount(monthlyPKR)}</span>
+                        </div>
+                    ` : ''}
+                    <div class="total-row grand">
+                        <span class="label">Total Amount</span>
+                        <span class="val">PKR ${formatAmount(totalPKR)}</span>
+                    </div>
+                    <!-- <div class="conversion-note">
+                        * All amounts are processed in PKR. Exchange rate fixed at 1 USD = ${exchangeRate} PKR.
+                    </div> -->
+                </div>
             </div>
-            <div>
-              <div class="inv-word">Invoice</div>
-              <div class="inv-num">${data.invoiceNumber}</div>
-            </div>
-          </div>
-          <div class="divider"></div>
-          <div class="parties">
-            <div>
-              <div class="p-label">From</div>
-              <div class="p-name">${data.companyName}</div>
-              <div class="p-detail">${data.companyEmail}<br>${data.companyPhone}</div>
-            </div>
-            <div>
-              <div class="p-label">Bill To</div>
-              <div class="p-name">${data.clientName}</div>
-              <div class="p-detail">${data.clientEmail}<br>${data.clientAddress}</div>
-            </div>
-          </div>
-          <table>
-            <thead>
-              <tr><th>Description</th><th>Qty</th><th>Unit Price</th><th>Amount</th></tr>
-            </thead>
-            <tbody>
-              ${data.items.map(item => `
-                <tr>
-                  <td>${item.description || '—'}</td>
-                  <td>${item.quantity}</td>
-                  <td>${item.currency === 'PKR' ? 'Rs.' : '$'}${fmt(Number(item.unitPrice || 0))}</td>
-                  <td style="font-weight:600;color:#1a1a1a">${item.currency === 'PKR' ? 'Rs.' : '$'}${fmt(Number(item.quantity || 0) * Number(item.unitPrice || 0))}</td>
-                </tr>`).join('')}
-            </tbody>
-          </table>
-          <div class="totals-wrap">
-            <div class="totals">
-              ${data.monthlyRetainer ? `<div class="t-row"><span>Monthly Retainer</span><span>${data.monthlyRetainerCurrency === 'PKR' ? 'Rs.' : '$'}${fmt(Number(data.monthlyRetainer || 0))}</span></div>` : ''}
-              <div class="t-row"><span>Subtotal</span><span>Rs.${fmt(subtotalPKR)}</span></div>
-              <div class="t-row"><span>Tax (${data.taxRate}%)</span><span>Rs.${fmt(tax)}</span></div>
-              <div class="t-total"><span>Total (PKR)</span><span>Rs.${fmt(totalPKR)}</span></div>
-            </div>
-          </div>
-          ${data.notes || data.bankAccountDetails || data.debitCardDetails ? `
-            <div class="info-row">
-              ${data.notes ? `<div class="info-box"><div class="info-label">Notes</div><div class="info-text">${data.notes}</div></div>` : ''}
-              ${(data.bankAccountDetails || data.debitCardDetails) ? `<div class="info-box"><div class="info-label">Payment Details</div><div class="info-text">${[data.bankAccountDetails, data.debitCardDetails].filter(Boolean).join('\n\n')}</div></div>` : ''}
-            </div>` : ''}
-          <div class="footer">
-            <span>Thank you for your business.</span>
-            <span>${data.invoiceNumber}</span>
-          </div>
+
+            <footer class="footer">
+                <div class="thanks">Thank you for your business!</div>
+            </footer>
         </div>
-      </body></html>
-    `;
+    </div>
 
-    if (isMobile) {
-      const style = document.createElement('style');
-      style.id = '__inv_print_style';
-      style.innerHTML = `@media print{body>*:not(#__inv_print){display:none!important}#__inv_print{display:block!important;position:fixed;top:0;left:0;width:100%;background:#fff}}`;
-      const wrapper = document.createElement('div');
-      wrapper.id = '__inv_print';
-      wrapper.style.cssText = 'display:none;';
-      wrapper.innerHTML = printHTML;
-      document.head.appendChild(style);
-      document.body.appendChild(wrapper);
-      window.print();
-      setTimeout(() => { document.getElementById('__inv_print_style')?.remove(); document.getElementById('__inv_print')?.remove(); }, 1000);
-    } else {
-      const win = window.open('', '_blank');
-      if (!win) return;
-      win.document.write(printHTML);
-      win.document.close();
-      win.focus();
-      setTimeout(() => { win.print(); win.close(); }, 300);
+    <script>
+        window.onload = function() {
+            // Short delay to ensure fonts and styles are loaded
+            setTimeout(function() {
+                window.print();
+            }, 500);
+            
+            // Close the window after a slight delay to allow the print dialog to open
+            // Modern browsers will wait for the print dialog to close before executing the next line
+            window.onafterprint = function() {
+                window.close();
+            };
+            
+            // Fallback for browsers that don't support onafterprint or if dialog is closed/cancelled
+            // We can't really detect if they cancelled without onafterprint, 
+            // but usually onafterprint fires after the dialog is dismissed.
+        };
+    </script>
+</body>
+</html>`;
+
+    const w = 1000;
+    const h = 900;
+    const left = (window.screen.width / 2) - (w / 2);
+    const top = (window.screen.height / 2) - (h / 2);
+    // Using a named window ('InvoicePrintWindow') ensures that multiple clicks don't open multiple windows
+    const printWindow = window.open('', 'InvoicePrintWindow', `width=${w},height=${h},left=${left},top=${top}`);
+    if (printWindow) {
+      printWindow.document.write(html);
+      printWindow.document.close();
+      printWindow.focus();
     }
   };
-
-  /* ─── render ───────────────────────────────────────────────── */
   return (
-    <div className="h-full flex flex-col" style={{ background: '#f7f5f0', fontFamily: 'Georgia, serif' }}>
-
-      {/* ── toolbar ─────────────────────────────────────────── */}
-      <div
-        className="flex items-center justify-between px-5 py-3 shrink-0"
-        style={{ background: '#fff', borderBottom: '1px solid #2a2218' }}
-      >
-        {onBack && (
-          <button
-            onClick={onBack}
-            className="lg:hidden text-xs font-bold uppercase tracking-[0.15em] transition-colors"
-            style={{ color: '#8a7a5a' }}
-          >
-            ← Edit
-          </button>
-        )}
-        <span className="text-xs font-bold uppercase tracking-[0.25em]" style={{ color: '#8a7a5a' }}>
-          Preview
-        </span>
-        <button
-          onClick={handlePrint}
-          className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.15em] px-4 py-2 rounded-lg transition-all"
-          style={{ background: '#000000', color: '#ffffff' }}
-          onMouseEnter={e => (e.currentTarget.style.background = '#000000')}
-          onMouseLeave={e => (e.currentTarget.style.background = '#000000')}
-        >
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-            <polyline points="6 9 6 2 18 2 18 9" />
-            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
-            <rect x="6" y="14" width="12" height="8" />
-          </svg>
-          <span className="hidden sm:inline">Print / PDF</span>
-          <span className="sm:hidden">Print</span>
-        </button>
-      </div>
-
-      {/* ── preview area ────────────────────────────────────── */}
-      <div className="flex-1 overflow-auto p-4 sm:p-6 lg:p-10 flex justify-center">
-        <div
-          ref={printRef}
-          className="bg-white w-full max-w-[740px] rounded-2xl overflow-hidden"
-          style={{
-            boxShadow: '0 4px 24px #0000000f, 0 1px 4px #0000000a',
-            border: '1px solid #e5ddd0',
-          }}
-        >
-          {/* top accent */}
-          <div style={{ height: '4px', background: '#1a1a1a' }} />
-
-          <div className="p-7 sm:p-10 lg:p-14">
-
-            {/* header */}
-            <div className="flex justify-between items-start mb-8 gap-4">
-              <div className="min-w-0">
-                <div className="text-xl sm:text-2xl font-bold tracking-tight truncate" style={{ color: '#1a1a1a', letterSpacing: '-0.03em' }}>
-                  {data.companyName}
-                </div>
-                <div className="text-xs mt-1 truncate" style={{ color: '#aaa' }}>{data.companyEmail}</div>
-                <div className="text-xs truncate" style={{ color: '#aaa' }}>{data.companyPhone}</div>
-              </div>
-              <div className="text-right shrink-0">
-                <div
-                  className="text-3xl sm:text-4xl font-light uppercase"
-                  style={{ letterSpacing: '7px', color: '#1a1a1a', lineHeight: 1 }}
-                >
-                  Invoice
-                </div>
-                <div className="text-xs font-mono mt-1.5" style={{ color: '#8a7960' }}>{data.invoiceNumber}</div>
-              </div>
-            </div>
-
-            {/* divider */}
-            <div style={{ height: '2px', background: '#1a1a1a', marginBottom: '28px' }} />
-
-            {/* parties */}
-            <div className="grid grid-cols-2 gap-6 sm:gap-12 mb-9">
-              {[
-                { label: 'From', name: data.companyName, email: data.companyEmail, extra: data.companyPhone },
-                { label: 'Bill To', name: data.clientName, email: data.clientEmail, extra: data.clientAddress },
-              ].map(p => (
-                <div key={p.label}>
-                  <div
-                    className="text-[9px] sm:text-[10px] uppercase font-bold mb-2"
-                    style={{ color: '#000', letterSpacing: '3px' }}
-                  >{p.label}</div>
-                  <div className="font-bold text-sm sm:text-base" style={{ color: '#1a1a1a' }}>{p.name}</div>
-                  <div className="text-xs mt-1" style={{ color: '#666', lineHeight: 1.7 }}>
-                    {p.email}<br />{p.extra}
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* items table */}
-            <div className="overflow-x-auto -mx-7 sm:mx-0 px-7 sm:px-0 mb-6 sm:mb-8">
-              <table className="w-full" style={{ borderCollapse: 'collapse', minWidth: '460px' }}>
-                <thead>
-                  <tr style={{ borderBottom: '2px solid #1a1a1a' }}>
-                    {['Description', 'Qty', 'Unit Price', 'Amount'].map((h, i) => (
-                      <th
-                        key={h}
-                        className="pb-3 text-[9px] sm:text-[10px] uppercase font-bold"
-                        style={{
-                          color: '#000',
-                          letterSpacing: '2px',
-                          textAlign: i === 0 ? 'left' : 'right',
-                          padding: '8px 10px 10px 0',
-                          whiteSpace: 'nowrap',
-                        }}
-                      >{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.items.map((item, idx) => (
-                    <tr
-                      key={item.id}
-                      style={{ borderBottom: '1px solid #f0ead8', background: idx % 2 === 0 ? 'transparent' : '#fafaf8' }}
-                    >
-                      <td className="py-3 text-xs sm:text-sm pr-3" style={{ color: '#1a1a1a' }}>{item.description || '—'}</td>
-                      <td className="py-3 text-xs text-right font-mono pr-3" style={{ color: '#666' }}>{item.quantity}</td>
-                      <td className="py-3 text-xs text-right font-mono pr-3" style={{ color: '#666' }}>
-                        {item.currency === 'PKR' ? 'Rs.' : '$'}{fmt(Number(item.unitPrice || 0))}
-                      </td>
-                      <td className="py-3 text-xs text-right font-mono font-bold" style={{ color: '#1a1a1a' }}>
-                        {item.currency === 'PKR' ? 'Rs.' : '$'}{fmt(Number(item.quantity || 0) * Number(item.unitPrice || 0))}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            {/* totals */}
-            <div className="flex justify-end mb-8 sm:mb-10">
-              <div
-                className="w-64 sm:w-72 rounded-2xl overflow-hidden"
-                style={{ background: '#1a1a1a' }}
-              >
-                <div className="px-5 py-4 space-y-1.5">
-                  {data.monthlyRetainer ? (
-                    <div className="flex justify-between text-xs" style={{ color: '#bbb' }}>
-                      <span>Monthly Retainer</span>
-                      <span className="font-mono">
-                        {data.monthlyRetainerCurrency === 'PKR' ? 'Rs.' : '$'}{fmt(Number(data.monthlyRetainer || 0))}
-                      </span>
-                    </div>
-                  ) : null}
-                  <div className="flex justify-between text-xs" style={{ color: '#fff' }}>
-                    <span>Subtotal</span><span className="font-mono">Rs.{fmt(subtotalPKR)}</span>
-                  </div>
-                  <div className="flex justify-between text-xs" style={{ color: '#fff' }}>
-                    <span>Tax ({data.taxRate}%)</span><span className="font-mono">Rs.{fmt(tax)}</span>
-                  </div>
-                  <div
-                    className="flex justify-between text-lg sm:text-xl font-bold pt-3 mt-1"
-                    style={{ borderTop: '1px solid #333', color: '#fff' }}
-                  >
-                    <span>Total (PKR)</span><span className="font-mono">Rs.{fmt(totalPKR)}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* notes & payment info */}
-            {(data.notes || data.bankAccountDetails || data.debitCardDetails) && (
-              <div className="flex flex-col sm:flex-row gap-3 mt-8">
-                {data.notes && (
-                  <div
-                    className="flex-1 p-4 rounded-r-xl"
-                    style={{ background: '#faf9f6', borderLeft: '3px solid #000' }}
-                  >
-                    <div
-                      className="text-[9px] uppercase font-bold tracking-[3px] mb-2"
-                      style={{ color: '#000000' }}
-                    >Notes</div>
-                    <div className="text-xs italic" style={{ color: '#666', lineHeight: 1.75 }}>{data.notes}</div>
-                  </div>
-                )}
-                {(data.bankAccountDetails || data.debitCardDetails) && (
-                  <div
-                    className="flex-1 p-4 rounded-r-xl"
-                    style={{ background: '#faf9f6', borderLeft: '3px solid #000000' }}
-                  >
-                    <div
-                      className="text-[9px] uppercase font-bold tracking-[3px] mb-2"
-                      style={{ color: '#000000' }}
-                    >Payment Details</div>
-                    <div className="text-xs italic whitespace-pre-wrap" style={{ color: '#666', lineHeight: 1.75 }}>
-                      {[data.bankAccountDetails, data.debitCardDetails].filter(Boolean).join('\n\n')}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* footer */}
-            <div
-              className="mt-14 pt-4 flex justify-between items-center"
-              style={{ borderTop: '1px solid #ede8dc' }}
-            >
-              <span className="text-xs" style={{ color: '#ccc', fontStyle: 'italic' }}>
-                Thank you for your business.
-              </span>
-              <span className="text-xs font-mono" style={{ color: '#ccc' }}>{data.invoiceNumber}</span>
-            </div>
-
+    <div className="space-y-10 invoice-printable">
+      <div className="rounded-[20px] border border-slate-200 bg-white p-8 shadow-xl">
+        <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between">
+          <div className="space-y-4">
+            <p className="text-xs uppercase tracking-[0.35em] text-slate-500">From</p>
+            <div className="text-2xl font-semibold text-slate-950">{data.companyName}</div>
+            <p className="text-sm leading-7 text-slate-600">{data.companyAddress}</p>
+            <p className="text-sm leading-7 text-slate-600">{data.companyEmail}</p>
+            <p className="text-sm leading-7 text-slate-600">{data.companyPhone}</p>
           </div>
 
-          {/* bottom accent */}
-          <div style={{ height: '4px', background: '#1a1a1a' }} />
+          <div className="min-w-[240px] rounded-[18px] border border-slate-200 bg-slate-50 p-5">
+            <p className="text-xs uppercase tracking-[0.35em] text-slate-500">Invoice</p>
+            <div className="mt-3 text-3xl font-bold text-slate-950">{data.invoiceNumber}</div>
+            {/* <p className="mt-4 text-sm text-slate-600">Issue Date: {data.issueDate}</p>
+            <p className="text-sm text-slate-600">Due Date: {data.dueDate}</p> */}
+          </div>
+        </div>
+
+        <div className="mt-10 rounded-[18px] border border-slate-200 bg-slate-50 p-6">
+          <p className="text-xs uppercase tracking-[0.35em] text-slate-500">Bill To</p>
+          <div className="mt-4 text-xl font-semibold text-slate-950">{data.clientName}</div>
+          <p className="mt-3 text-sm leading-7 text-slate-600">{data.clientAddress}</p>
+          <p className="mt-2 text-sm leading-7 text-slate-600">{data.clientEmail}</p>
+          <p className="mt-1 text-sm leading-7 text-slate-600">{data.clientPhone}</p>
+        </div>
+
+        <div className="mt-10 rounded-[18px] border border-slate-200 bg-slate-50 p-6">
+          <p className="text-xs uppercase tracking-[0.35em] text-slate-500">Billing</p>
+
+          {oneTimeValue > 0 && (
+            <div className="mt-6 rounded-[18px] border border-slate-200 bg-white p-5 text-sm leading-7 text-slate-600">
+              <p className="font-semibold text-slate-950">One-time Invoice</p>
+              <p className="mt-3">
+                <span className="font-semibold text-slate-900">Amount:</span>{' '}
+                {oneTimeCurrency === 'USD' ? '$' : 'PKR '}{formatAmount(oneTimeValue)}
+              </p>
+              {oneTimeCurrency === 'USD' && (
+                <p className="mt-2 font-semibold text-slate-900">PKR {formatAmount(oneTimePKR)}</p>
+              )}
+              <p className="mt-3 text-sm leading-7 text-slate-600">{data.oneTimeDescription || '—'}</p>
+            </div>
+          )}
+
+          {monthlyValue > 0 && (
+            <div className="mt-6 rounded-[18px] border border-slate-200 bg-white p-5 text-sm leading-7 text-slate-600">
+              <p className="font-semibold text-slate-950">Monthly Retainer</p>
+              <p className="mt-3">
+                <span className="font-semibold text-slate-900">Amount:</span>{' '}
+                {monthlyCurrency === 'USD' ? '$' : 'PKR '}{formatAmount(monthlyValue)}
+              </p>
+              {monthlyCurrency === 'USD' && (
+                <p className="mt-2 font-semibold text-slate-900">PKR {formatAmount(monthlyPKR)}</p>
+              )}
+              <p className="mt-3 text-sm leading-7 text-slate-600">{data.billingMonth || '—'}</p>
+              <p className="mt-3 text-sm leading-7 text-slate-600">{data.monthlyDescription || '—'}</p>
+            </div>
+          )}
+        </div>
+
+        <div className="mt-10 rounded-[18px] border border-slate-200 bg-slate-50 p-6">
+          <p className="text-xs uppercase tracking-[0.35em] text-slate-500">Account Details</p>
+          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            <div>
+              <p className="text-[11px] uppercase tracking-[0.25em] text-slate-500">Bank Name</p>
+              <p className="mt-2 text-sm leading-7 text-slate-600">{data.bankName}</p>
+            </div>
+            <div>
+              <p className="text-[11px] uppercase tracking-[0.25em] text-slate-500">Payment Method</p>
+              <p className="mt-2 text-sm leading-7 text-slate-600">{data.paymentMethod}</p>
+            </div>
+            <div>
+              <p className="text-[11px] uppercase tracking-[0.25em] text-slate-500">Account Title</p>
+              <p className="mt-2 text-sm leading-7 text-slate-600">{data.accountTitle}</p>
+            </div>
+            <div>
+              <p className="text-[11px] uppercase tracking-[0.25em] text-slate-500">Account Number</p>
+              <p className="mt-2 text-sm leading-7 text-slate-600">{data.accountNumber}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-10 rounded-[26px] border border-slate-200 bg-white p-8 shadow-[0_20px_60px_rgba(0,0,0,0.05)]">
+          <p className="text-xs uppercase tracking-[0.35em] text-slate-500">Invoice Total</p>
+          <div className="mt-6 space-y-4 rounded-[18px] bg-slate-50 p-6 border border-slate-100">
+            <div className="flex items-center justify-between gap-4">
+              <span className="text-sm uppercase tracking-[0.24em] text-slate-600">Grand Total</span>
+              <span className="text-3xl font-bold" style={{ color: '#0c3721' }}>PKR {formatAmount(totalPKR)}</span>
+            </div>
+            {/* {(oneTimeValue > 0 || monthlyValue > 0) && (
+              <p className="text-xs text-slate-400">USD values are automatically converted to PKR at 1 USD = {exchangeRate} PKR.</p>
+            )} */}
+          </div>
+        </div>
+
+        <div className="mt-8 flex justify-end print:hidden">
+          <button
+            type="button"
+            onClick={handlePrint}
+            className="rounded-[14px] bg-slate-950 px-6 py-3 text-sm font-semibold uppercase tracking-[0.16em] text-white transition hover:bg-black"
+          >
+            Download / Print
+          </button>
         </div>
       </div>
     </div>
