@@ -530,28 +530,28 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data }) => {
     }
   };
   return (
-    <div className="space-y-10 invoice-printable">
-      <div className="rounded-[20px] border border-slate-200 bg-white p-8 shadow-xl">
-        <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between">
-          <div className="space-y-4">
-            <p className="text-xs uppercase tracking-[0.35em] text-slate-500">From</p>
-            <div className="text-2xl font-semibold text-slate-950">{data.companyName}</div>
+    <div className="space-y-6 sm:space-y-10 invoice-printable">
+      <div className="rounded-[20px] border border-slate-200 bg-white p-4 sm:p-8 shadow-xl">
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+          <div className="space-y-3 sm:space-y-4">
+            <p className="text-[10px] sm:text-xs uppercase tracking-[0.35em] text-slate-500">From</p>
+            <div className="text-xl sm:text-2xl font-semibold text-slate-950">{data.companyName}</div>
             <p className="text-sm leading-7 text-slate-600">{data.companyAddress}</p>
             <p className="text-sm leading-7 text-slate-600">{data.companyEmail}</p>
             <p className="text-sm leading-7 text-slate-600">{data.companyPhone}</p>
           </div>
 
-          <div className="min-w-[240px] rounded-[18px] border border-slate-200 bg-slate-50 p-5">
-            <p className="text-xs uppercase tracking-[0.35em] text-slate-500">Invoice</p>
-            <div className="mt-3 text-3xl font-bold text-slate-950">{data.invoiceNumber}</div>
+          <div className="min-w-full sm:min-w-[240px] rounded-[18px] border border-slate-200 bg-slate-50 p-4 sm:p-5">
+            <p className="text-[10px] sm:text-xs uppercase tracking-[0.35em] text-slate-500">Invoice</p>
+            <div className="mt-2 sm:mt-3 text-2xl sm:text-3xl font-bold text-slate-950">{data.invoiceNumber}</div>
             {/* <p className="mt-4 text-sm text-slate-600">Issue Date: {data.issueDate}</p>
             <p className="text-sm text-slate-600">Due Date: {data.dueDate}</p> */}
           </div>
         </div>
 
-        <div className="mt-10 rounded-[18px] border border-slate-200 bg-slate-50 p-6">
-          <p className="text-xs uppercase tracking-[0.35em] text-slate-500">Bill To</p>
-          <div className="mt-4 text-xl font-semibold text-slate-950">{data.clientName}</div>
+        <div className="mt-8 rounded-[18px] border border-slate-200 bg-slate-50 p-4 sm:p-6">
+          <p className="text-[10px] sm:text-xs uppercase tracking-[0.35em] text-slate-500">Bill To</p>
+          <div className="mt-3 sm:mt-4 text-lg sm:text-xl font-semibold text-slate-950">{data.clientName}</div>
           <p className="mt-3 text-sm leading-7 text-slate-600">{data.clientAddress}</p>
           <p className="mt-2 text-sm leading-7 text-slate-600">{data.clientEmail}</p>
           <p className="mt-1 text-sm leading-7 text-slate-600">{data.clientPhone}</p>
@@ -590,15 +590,15 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data }) => {
           )}
         </div>
 
-        <div className="mt-10 rounded-[18px] border border-slate-200 bg-slate-50 p-6">
-          <p className="text-xs uppercase tracking-[0.35em] text-slate-500">Account Details</p>
+        <div className="mt-8 rounded-[18px] border border-slate-200 bg-slate-50 p-4 sm:p-6">
+          <p className="text-[10px] sm:text-xs uppercase tracking-[0.35em] text-slate-500">Account Details</p>
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
             <div>
-              <p className="text-[11px] uppercase tracking-[0.25em] text-slate-500">Bank Name</p>
-              <p className="mt-2 text-sm leading-7 text-slate-600">{data.bankName}</p>
+              <p className="text-[9px] sm:text-[11px] uppercase tracking-[0.25em] text-slate-500">Bank Name</p>
+              <p className="mt-1 sm:mt-2 text-sm leading-7 text-slate-600">{data.bankName}</p>
             </div>
             <div>
-              <p className="text-[11px] uppercase tracking-[0.25em] text-slate-500">Payment Method</p>
+              <p className="text-[9px] sm:text-[11px] uppercase tracking-[0.25em] text-slate-500">Payment Method</p>
               <p className="mt-2 text-sm leading-7 text-slate-600">{data.paymentMethod}</p>
             </div>
             <div>
@@ -612,8 +612,8 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data }) => {
           </div>
         </div>
 
-        <div className="mt-10 rounded-[26px] border border-slate-200 bg-white p-8 shadow-[0_20px_60px_rgba(0,0,0,0.05)]">
-          <p className="text-xs uppercase tracking-[0.35em] text-slate-500">Invoice Total</p>
+        <div className="mt-8 rounded-[26px] border border-slate-200 bg-white p-6 sm:p-8 shadow-[0_20px_60px_rgba(0,0,0,0.05)]">
+          <p className="text-[10px] sm:text-xs uppercase tracking-[0.35em] text-slate-500">Invoice Total</p>
           <div className="mt-6 space-y-4 rounded-[18px] bg-slate-50 p-6 border border-slate-100">
             <div className="flex items-center justify-between gap-4">
               <span className="text-sm uppercase tracking-[0.24em] text-slate-600">Grand Total</span>
@@ -625,11 +625,11 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data }) => {
           </div>
         </div>
 
-        <div className="mt-8 flex justify-end print:hidden">
+        <div className="mt-6 flex justify-end print:hidden">
           <button
             type="button"
             onClick={handlePrint}
-            className="rounded-[14px] bg-slate-950 px-6 py-3 text-sm font-semibold uppercase tracking-[0.16em] text-white transition hover:bg-black"
+            className="w-full sm:w-auto rounded-[14px] bg-slate-950 px-6 py-4 text-sm font-semibold uppercase tracking-[0.16em] text-white transition hover:bg-black"
           >
             Download / Print
           </button>

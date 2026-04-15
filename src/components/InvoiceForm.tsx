@@ -12,10 +12,10 @@ const INPUT =
 const LABEL = 'block text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-600 mb-2';
 
 const SectionCard: React.FC<{ title: string; description: string; children: React.ReactNode }> = ({ title, description, children }) => (
-  <div className="rounded-[18px] border border-slate-200 bg-slate-50 p-6">
+  <div className="rounded-[18px] border border-slate-200 bg-slate-50 p-4 sm:p-6">
     <div className="mb-6">
-      <p className="text-xs uppercase tracking-[0.35em] text-slate-500">{title}</p>
-      <p className="mt-2 text-sm text-slate-600">{description}</p>
+      <p className="text-[10px] sm:text-xs uppercase tracking-[0.35em] text-slate-500">{title}</p>
+      <p className="mt-2 text-xs sm:text-sm text-slate-600">{description}</p>
     </div>
     <div className="space-y-6">{children}</div>
   </div>
@@ -25,7 +25,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({ data, onChange }) => {
   const set = (field: keyof InvoiceData, value: string) => onChange({ ...data, [field]: value } as InvoiceData);
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-6 sm:space-y-10">
       <SectionCard title="Company Details" description="Add your business contact information.">
         <div>
           <label className={LABEL}>Company Name</label>
