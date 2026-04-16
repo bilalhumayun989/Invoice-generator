@@ -356,7 +356,7 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, onPrint })
             .billing-section { margin-bottom: 14px; }
             .section-title { margin-bottom: 8px; }
             .grid-2 { margin-bottom: 14px; }
-            @page { size: A4; margin: 8mm; }
+            @page { size: A4; margin: 0; }
         }
     </style>
 </head>
