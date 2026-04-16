@@ -1,22 +1,23 @@
-﻿import React from 'react';
+import React from 'react';
 import type { InvoiceData } from '../types/invoice';
 
 interface InvoicePreviewProps {
   data: InvoiceData;
 }
 
-export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data }) => {
-  const parseAmount = (value: string) => Number(value.replace(/,/g, '')) || 0;
-  const formatAmount = (value: number) => value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const exchangeRate = 290;
+const convertToPKR = (value: number, currency: 'USD' | 'PKR') => currency === 'USD' ? value * exchangeRate : value;
+const formatAmount = (value: number) => value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const parseAmount = (value: string) => Number(value.toString().replace(/,/g, '')) || 0;
 
-  const oneTimeValue = parseAmount(data.oneTimeAmount);
-  const monthlyValue = parseAmount(data.monthlyAmount);
-  const oneTimeCurrency = data.oneTimeCurrency;
-  const monthlyCurrency = data.monthlyCurrency;
-  const exchangeRate = 290;
-  const convertToPKR = (value: number, currency: 'USD' | 'PKR') => currency === 'USD' ? value * exchangeRate : value;
-  const oneTimePKR = convertToPKR(oneTimeValue, oneTimeCurrency);
-  const monthlyPKR = convertToPKR(monthlyValue, monthlyCurrency);
+export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data }) => {
+  const oneTimePKR = (data.items || []).reduce((acc, item) => acc + convertToPKR(item.unitPrice || 0, item.currency || 'PKR'), 0);
+  const oneTimeValueUSD = (data.items || []).filter(i => i.currency === 'USD').reduce((acc, item) => acc + (item.unitPrice || 0), 0);
+  const oneTimeValuePKR = (data.items || []).filter(i => i.currency === 'PKR').reduce((acc, item) => acc + (item.unitPrice || 0), 0);
+
+  const monthlyValue = parseAmount(data.monthlyAmount || '0');
+  const monthlyCurrency = data.monthlyCurrency || 'PKR';
+  const monthlyPKR = convertToPKR(monthlyValue, monthlyCurrency as 'USD' | 'PKR');
   const totalPKR = oneTimePKR + monthlyPKR;
 
   const handlePrint = () => {
@@ -300,27 +301,21 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data }) => {
         }
 
         .total-row.grand {
-            margin-top: 8px;
-            padding-top: 12px;
+            margin-top: 12px;
+            padding-top: 16px;
             border-top: 2px solid var(--border);
         }
 
         .total-row.grand .label {
-            font-size: 13px;
+            font-size: 14px;
             font-weight: 700;
             color: var(--primary);
         }
 
         .total-row.grand .val {
-            font-size: 24px;
+            font-size: 28px;
             font-weight: 800;
             color: #0c3721;
-        }
-
-        .conversion-note {
-            font-size: 10px;
-            color: var(--text-muted);
-            margin-top: 10px;
         }
 
         .footer {
@@ -370,9 +365,6 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data }) => {
                 <div class="invoice-meta">
                     <div class="invoice-label">Invoice</div>
                     <div class="invoice-number">${data.invoiceNumber}</div>
-                    <!-- <div class="date-badge">
-                        Issued: <strong>${data.issueDate}</strong> &nbsp;•&nbsp; Due: <strong>${data.dueDate}</strong>
-                    </div> -->
                 </div>
             </header>
 
@@ -392,23 +384,43 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data }) => {
                 <section class="billing-section">
                     <div class="section-title">Billing Details</div>
                     
-                    ${oneTimeValue > 0 ? `
+                    ${(data.items || []).length > 0 ? `
                         <div class="billing-item">
                             <div class="billing-header">
-                                <span class="billing-tag">One-time Service</span>
-                                <span class="billing-price">${oneTimeCurrency === 'USD' ? '$' : 'PKR '}${formatAmount(oneTimeValue)}</span>
+                                <span class="billing-tag">One-time Services</span>
+                                <span class="billing-price">Subtotal: PKR ${formatAmount(oneTimePKR)}</span>
                             </div>
-                            ${oneTimeCurrency === 'USD' ? `
-                                <div class="billing-row">
+                            
+                            <table style="width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 11px;">
+                                <thead>
+                                    <tr style="border-bottom: 1px solid var(--border); text-align: left; color: var(--text-muted);">
+                                        <th style="padding: 8px 0; width: 60%;">Description</th>
+                                        <th style="padding: 8px 0; text-align: right; width: 15%;">Currency</th>
+                                        <th style="padding: 8px 0; text-align: right; width: 25%;">Amount</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${(data.items || []).map(item => `
+                                        <tr style="border-bottom: 1px dashed var(--border);">
+                                            <td style="padding: 8px 0;">${item.description}</td>
+                                            <td style="padding: 8px 0; text-align: right; color: var(--text-muted);">${item.currency}</td>
+                                            <td style="padding: 8px 0; text-align: right; font-weight: 600;">${item.currency === 'USD' ? '$' : ''}${formatAmount(item.unitPrice)}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+
+                            <!-- Summary for USD items if any -->
+                            ${oneTimeValueUSD > 0 ? `
+                                <div class="billing-row" style="margin-top: 12px; padding-top: 8px; border-top: 1px solid var(--border);">
                                     <span>Exchange Rate</span>
                                     <span>1 USD = ${exchangeRate} PKR</span>
                                 </div>
                                 <div class="billing-row">
-                                    <span>Amount in PKR</span>
-                                    <strong>PKR ${formatAmount(oneTimePKR)}</strong>
+                                    <span>USD Subtotal in PKR</span>
+                                    <strong>PKR ${formatAmount(oneTimeValueUSD * exchangeRate)}</strong>
                                 </div>
                             ` : ''}
-                            ${data.oneTimeDescription ? `<div class="billing-desc">${data.oneTimeDescription}</div>` : ''}
                         </div>
                     ` : ''}
 
@@ -429,7 +441,7 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data }) => {
                                 </div>
                                 <div class="billing-row">
                                     <span>Amount in PKR</span>
-                                    <strong>PKR ${formatAmount(monthlyPKR)}</strong>
+                                    <strong>PKR ${formatAmount(monthlyValue * exchangeRate)}</strong>
                                 </div>
                             ` : ''}
                             ${data.monthlyDescription ? `<div class="billing-desc">${data.monthlyDescription}</div>` : ''}
@@ -437,28 +449,30 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data }) => {
                     ` : ''}
                 </section>
 
-                <section class="billing-section">
-                    <div class="section-title">Account Information</div>
-                    <div class="account-details">
-                        <div class="account-item">
-                            <div class="label">Bank Name</div>
-                            <div class="val">${data.bankName}</div>
-                        </div>
-                        <div class="account-item">
-                            <div class="label">Account Number</div>
-                            <div class="val">${data.accountNumber}</div>
-                        </div>
-                    </div>
-                </section>
+                    ${data.bankName || data.accountNumber ? `
+                        <section class="billing-section">
+                            <div class="section-title">Account Information</div>
+                            <div class="account-details">
+                                <div class="account-item">
+                                    <div class="label">Bank Name</div>
+                                    <div class="val">${data.bankName || '—'}</div>
+                                </div>
+                                <div class="account-item">
+                                    <div class="label">Account Number</div>
+                                    <div class="val">${data.accountNumber || '—'}</div>
+                                </div>
+                            </div>
+                        </section>
+                    ` : ''}
 
                 <div class="total-container">
-                    ${oneTimeValue > 0 ? `
+                    ${oneTimePKR > 0 ? `
                         <div class="total-row">
-                            <span class="label">One-time Services</span>
+                            <span class="label">One-time Services Total</span>
                             <span class="val">PKR ${formatAmount(oneTimePKR)}</span>
                         </div>
                     ` : ''}
-                    ${monthlyValue > 0 ? `
+                    ${monthlyPKR > 0 ? `
                         <div class="total-row">
                             <span class="label">Monthly Subtotal</span>
                             <span class="val">PKR ${formatAmount(monthlyPKR)}</span>
@@ -468,9 +482,6 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data }) => {
                         <span class="label">Total Amount</span>
                         <span class="val">PKR ${formatAmount(totalPKR)}</span>
                     </div>
-                    <!-- <div class="conversion-note">
-                        * All amounts are processed in PKR. Exchange rate fixed at 1 USD = ${exchangeRate} PKR.
-                    </div> -->
                 </div>
             </div>
 
@@ -482,20 +493,13 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data }) => {
 
     <script>
         window.onload = function() {
-            // Short delay to ensure fonts and styles are loaded
             setTimeout(function() {
                 window.print();
             }, 500);
             
-            // Close the window after a slight delay to allow the print dialog to open
-            // Modern browsers will wait for the print dialog to close before executing the next line
             window.onafterprint = function() {
                 window.close();
             };
-            
-            // Fallback for browsers that don't support onafterprint or if dialog is closed/cancelled
-            // We can't really detect if they cancelled without onafterprint, 
-            // but usually onafterprint fires after the dialog is dismissed.
         };
     </script>
 </body>
@@ -505,7 +509,6 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data }) => {
     const h = 900;
     const left = (window.screen.width / 2) - (w / 2);
     const top = (window.screen.height / 2) - (h / 2);
-    // Using a named window ('InvoicePrintWindow') ensures that multiple clicks don't open multiple windows
     const printWindow = window.open('', 'InvoicePrintWindow', `width=${w},height=${h},left=${left},top=${top}`);
     if (printWindow) {
       printWindow.document.write(html);
@@ -513,6 +516,7 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data }) => {
       printWindow.focus();
     }
   };
+
   return (
     <div className="space-y-6 sm:space-y-10 invoice-printable">
       <div className="rounded-[20px] border border-slate-200 bg-white p-4 sm:p-8 shadow-xl">
@@ -528,8 +532,6 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data }) => {
           <div className="min-w-full sm:min-w-[240px] rounded-[18px] border border-slate-200 bg-slate-50 p-4 sm:p-5">
             <p className="text-[10px] sm:text-xs uppercase tracking-[0.35em] text-slate-500">Invoice</p>
             <div className="mt-2 sm:mt-3 text-2xl sm:text-3xl font-bold text-slate-950">{data.invoiceNumber}</div>
-            {/* <p className="mt-4 text-sm text-slate-600">Issue Date: {data.issueDate}</p>
-            <p className="text-sm text-slate-600">Due Date: {data.dueDate}</p> */}
           </div>
         </div>
 
@@ -544,17 +546,49 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data }) => {
         <div className="mt-10 rounded-[18px] border border-slate-200 bg-slate-50 p-6">
           <p className="text-xs uppercase tracking-[0.35em] text-slate-500">Billing</p>
 
-          {oneTimeValue > 0 && (
+          {(data.items || []).length > 0 && (
             <div className="mt-6 rounded-[18px] border border-slate-200 bg-white p-5 text-sm leading-7 text-slate-600">
-              <p className="font-semibold text-slate-950">One-time Invoice</p>
-              <p className="mt-3">
-                <span className="font-semibold text-slate-900">Amount:</span>{' '}
-                {oneTimeCurrency === 'USD' ? '$' : 'PKR '}{formatAmount(oneTimeValue)}
-              </p>
-              {oneTimeCurrency === 'USD' && (
-                <p className="mt-2 font-semibold text-slate-900">PKR {formatAmount(oneTimePKR)}</p>
-              )}
-              <p className="mt-3 text-sm leading-7 text-slate-600">{data.oneTimeDescription || '—'}</p>
+              <p className="font-semibold text-slate-950 mb-4">One-time Services</p>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left">
+                  <thead>
+                    <tr className="border-b border-slate-100 text-[10px] uppercase tracking-wider text-slate-400">
+                      <th className="pb-3 font-semibold w-1/2">Description</th>
+                      <th className="pb-3 font-semibold text-center">Currency</th>
+                      <th className="pb-3 font-semibold text-right">Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-50">
+                    {(data.items || []).map((item) => (
+                      <tr key={item.id}>
+                        <td className="py-3 pr-4 text-slate-700">{item.description || '—'}</td>
+                        <td className="py-3 text-center text-slate-500 font-medium">{item.currency}</td>
+                        <td className="py-3 text-right font-semibold text-slate-900">
+                          {item.currency === 'USD' ? '$' : 'PKR '}{formatAmount(item.unitPrice)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              
+              <div className="mt-4 pt-4 border-t border-slate-100 flex flex-col items-end gap-2 text-right">
+                <div className="space-y-1">
+                   {oneTimeValueUSD > 0 && (
+                    <p className="text-xs text-slate-500 italic">
+                      USD Subtotal: ${formatAmount(oneTimeValueUSD)} ≈ PKR {formatAmount(oneTimeValueUSD * exchangeRate)}
+                    </p>
+                  )}
+                   {oneTimeValuePKR > 0 && (
+                    <p className="text-xs text-slate-500 italic">
+                      PKR Subtotal: PKR {formatAmount(oneTimeValuePKR)}
+                    </p>
+                  )}
+                </div>
+                <p className="font-bold text-slate-950 text-base">
+                  One-time Total: <span className="text-slate-900">PKR {formatAmount(oneTimePKR)}</span>
+                </p>
+              </div>
             </div>
           )}
 
@@ -566,7 +600,7 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data }) => {
                 {monthlyCurrency === 'USD' ? '$' : 'PKR '}{formatAmount(monthlyValue)}
               </p>
               {monthlyCurrency === 'USD' && (
-                <p className="mt-2 font-semibold text-slate-900">PKR {formatAmount(monthlyPKR)}</p>
+                <p className="mt-2 font-semibold text-slate-900">PKR {formatAmount(monthlyValue * exchangeRate)}</p>
               )}
               <p className="mt-3 text-sm leading-7 text-slate-600">{data.billingMonth || '—'}</p>
               <p className="mt-3 text-sm leading-7 text-slate-600">{data.monthlyDescription || '—'}</p>
@@ -574,18 +608,21 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data }) => {
           )}
         </div>
 
-        <div className="mt-8 rounded-[18px] border border-slate-200 bg-slate-50 p-4 sm:p-6">
-          <p className="text-[10px] sm:text-xs uppercase tracking-[0.35em] text-slate-500">Account Details</p>
-          <div className="mt-4 grid gap-4 sm:grid-cols-2">
-            <div>
-              <p className="text-[9px] sm:text-[11px] uppercase tracking-[0.25em] text-slate-500">Bank Name</p>
-              <p className="mt-1 sm:mt-2 text-sm leading-7 text-slate-600">{data.bankName}</p>
-            </div>
-            <div>
-
+        {(data.bankName || data.accountNumber) && (
+          <div className="mt-8 rounded-[18px] border border-slate-200 bg-slate-50 p-4 sm:p-6">
+            <p className="text-[10px] sm:text-xs uppercase tracking-[0.35em] text-slate-500">Account Details</p>
+            <div className="mt-4 grid gap-4 sm:grid-cols-2">
+              <div>
+                <p className="text-[9px] sm:text-[11px] uppercase tracking-[0.25em] text-slate-500">Bank Name</p>
+                <p className="mt-1 sm:mt-2 text-sm leading-7 text-slate-600">{data.bankName || '—'}</p>
+              </div>
+              <div>
+                <p className="text-[9px] sm:text-[11px] uppercase tracking-[0.25em] text-slate-500">Account Number</p>
+                <p className="mt-1 sm:mt-2 text-sm leading-7 text-slate-600">{data.accountNumber || '—'}</p>
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         <div className="mt-8 rounded-[26px] border border-slate-200 bg-white p-6 sm:p-8 shadow-[0_20px_60px_rgba(0,0,0,0.05)]">
           <p className="text-[10px] sm:text-xs uppercase tracking-[0.35em] text-slate-500">Invoice Total</p>
@@ -594,9 +631,6 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data }) => {
               <span className="text-sm uppercase tracking-[0.24em] text-slate-600">Grand Total</span>
               <span className="text-3xl font-bold" style={{ color: '#0c3721' }}>PKR {formatAmount(totalPKR)}</span>
             </div>
-            {/* {(oneTimeValue > 0 || monthlyValue > 0) && (
-              <p className="text-xs text-slate-400">USD values are automatically converted to PKR at 1 USD = {exchangeRate} PKR.</p>
-            )} */}
           </div>
         </div>
 

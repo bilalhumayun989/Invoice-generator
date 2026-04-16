@@ -1,8 +1,8 @@
 export interface InvoiceItem {
   id: string;
   description: string;
-  quantity: number;
-  currency?: 'USD' | 'PKR';
+  quantity?: number;
+  currency: 'USD' | 'PKR';
   unitPrice: number;
 }
 
@@ -24,8 +24,6 @@ export interface InvoiceData {
   oneTimeCurrency: 'USD' | 'PKR';
   monthlyCurrency: 'USD' | 'PKR';
   billingType: 'one-time' | 'monthly-retainer';
-  oneTimeAmount: string;
-  oneTimeDescription: string;
   monthlyAmount: string;
   billingMonth: string;
   monthlyDescription: string;
@@ -52,13 +50,11 @@ export const defaultInvoiceData: InvoiceData = {
   oneTimeCurrency: 'USD',
   monthlyCurrency: 'PKR',
   billingType: 'monthly-retainer',
-  oneTimeAmount: '',
-  oneTimeDescription: 'Consulting and service fee',
   monthlyAmount: '5000',
   billingMonth: 'January 2024',
   monthlyDescription: 'Design Strategy & Editorial Direction Retainer',
   items: [
-    { id: '1', description: 'Design Strategy & Editorial Direction', quantity: 1, currency: 'USD', unitPrice: 5000 }
+    { id: '1', description: 'Design Strategy & Editorial Direction', currency: 'USD', unitPrice: 5000 }
   ],
   taxRate: 0,
   notes: 'Thank you for your business!',

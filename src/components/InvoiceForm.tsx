@@ -1,5 +1,5 @@
-﻿import React from 'react';
-import type { InvoiceData } from '../types/invoice';
+import React from 'react';
+import type { InvoiceData, InvoiceItem } from '../types/invoice';
 
 interface InvoiceFormProps {
   data: InvoiceData;
@@ -23,6 +23,29 @@ const SectionCard: React.FC<{ title: string; description: string; children: Reac
 
 export const InvoiceForm: React.FC<InvoiceFormProps> = ({ data, onChange }) => {
   const set = (field: keyof InvoiceData, value: string) => onChange({ ...data, [field]: value } as InvoiceData);
+
+  const updateItem = (id: string, field: keyof InvoiceItem, value: any) => {
+    const newItems = data.items.map(item => 
+      item.id === id ? { ...item, [field]: value } : item
+    );
+    onChange({ ...data, items: newItems });
+  };
+
+  const addItem = () => {
+    const newItem: InvoiceItem = {
+      id: Math.random().toString(36).substr(2, 9),
+      description: '',
+      currency: 'USD',
+      unitPrice: 0
+    };
+    onChange({ ...data, items: [...data.items, newItem] });
+  };
+
+  const removeItem = (id: string) => {
+    // Keep at least one item
+    if (data.items.length <= 1) return;
+    onChange({ ...data, items: data.items.filter(item => item.id !== id) });
+  };
 
   return (
     <div className="space-y-6 sm:space-y-10">
@@ -179,87 +202,128 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({ data, onChange }) => {
       </SectionCard>
 
       <SectionCard title="Billing & Currency" description="Add one-time and monthly retainer amounts with separate currencies.">
-        <div className="grid gap-5 grid-cols-1 md:grid-cols-2">
+        <div className="grid gap-5 ">
           <div className="w-full min-w-0 rounded-[18px] border border-slate-200 bg-white p-5 sm:p-6">
-            <p className="text-xs uppercase tracking-[0.35em] text-slate-500">One-time Invoice</p>
-            <div className="mt-4 space-y-4">
-              <div>
-                <label className={LABEL}>Currency</label>
-                <select
-                  className={INPUT}
-                  value={data.oneTimeCurrency}
-                  onChange={e => set('oneTimeCurrency', e.target.value)}
-                >
-                  <option value="USD">USD</option>
-                  <option value="PKR">PKR</option>
-                </select>
-              </div>
-              <div>
-                <label className={LABEL}>Amount ({data.oneTimeCurrency})</label>
-                <input
-                  className={INPUT}
-                  type="text"
-                  value={data.oneTimeAmount}
-                  onChange={e => set('oneTimeAmount', e.target.value)}
-                  placeholder={data.oneTimeCurrency === 'USD' ? '500.00' : '145000'}
-                />
-              </div>
-              <div>
-                <label className={LABEL}>Description</label>
-                <input
-                  className={INPUT}
-                  type="text"
-                  value={data.oneTimeDescription}
-                  onChange={e => set('oneTimeDescription', e.target.value)}
-                  placeholder="Project completion fee or service charge"
-                />
-              </div>
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-xs uppercase tracking-[0.35em] text-slate-500">One-time Services</p>
+            </div>
+
+            <div className="space-y-6">
+              {data.items.map((item, index) => (
+                <div key={item.id} className="relative rounded-xl border border-slate-100 bg-slate-50/50 p-4 pt-8 sm:pt-4">
+                  <div className="absolute left-4 top-2 text-[10px] font-bold text-slate-300 sm:static sm:mb-2">
+                    ITEM {index + 1}
+                  </div>
+                  <div className="grid gap-4 sm:grid-cols-12 sm:items-end">
+                    <div className="sm:col-span-6">
+                      <label className={LABEL}>Description</label>
+                      <input
+                        className={INPUT}
+                        type="text"
+                        value={item.description}
+                        onChange={e => updateItem(item.id, 'description', e.target.value)}
+                        placeholder="Service or product description"
+                      />
+                    </div>
+                    <div className="sm:col-span-2">
+                      <label className={LABEL}>Currency</label>
+                      <select
+                        className={INPUT}
+                        value={item.currency}
+                        onChange={e => updateItem(item.id, 'currency', e.target.value)}
+                      >
+                        <option value="USD">USD</option>
+                        <option value="PKR">PKR</option>
+                      </select>
+                    </div>
+                    <div className="sm:col-span-3">
+                      <label className={LABEL}>Price ({item.currency})</label>
+                      <input
+                        className={INPUT}
+                        type="number"
+                        min={0}
+                        value={item.unitPrice}
+                        onChange={e => updateItem(item.id, 'unitPrice', Math.max(0, parseFloat(e.target.value) || 0))}
+                        placeholder="0.00"
+                      />
+                    </div>
+                    <div className="sm:col-span-1 flex justify-end">
+                      <button
+                        type="button"
+                        onClick={() => removeItem(item.id)}
+                        className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-50 text-red-500 transition hover:bg-red-100 hover:text-red-600 disabled:opacity-30"
+                        disabled={data.items.length <= 1}
+                        title="Remove Item"
+                      >
+                        <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+
+              <button
+                type="button"
+                onClick={addItem}
+                className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-200 py-3 text-sm font-bold text-slate-500 transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-600"
+              >
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+                </svg>
+                Add Service Item
+              </button>
             </div>
           </div>
 
           <div className="w-full min-w-0 rounded-[18px] border border-slate-200 bg-white p-5 sm:p-6">
             <p className="text-xs uppercase tracking-[0.35em] text-slate-500">Monthly Retainer</p>
             <div className="mt-4 space-y-4">
-              <div>
-                <label className={LABEL}>Currency</label>
-                <select
-                  className={INPUT}
-                  value={data.monthlyCurrency}
-                  onChange={e => set('monthlyCurrency', e.target.value)}
-                >
-                  <option value="USD">USD</option>
-                  <option value="PKR">PKR</option>
-                </select>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label className={LABEL}>Currency</label>
+                  <select
+                    className={INPUT}
+                    value={data.monthlyCurrency}
+                    onChange={e => set('monthlyCurrency', e.target.value)}
+                  >
+                    <option value="USD">USD</option>
+                    <option value="PKR">PKR</option>
+                  </select>
+                </div>
+                <div>
+                  <label className={LABEL}>Amount ({data.monthlyCurrency})</label>
+                  <input
+                    className={INPUT}
+                    type="text"
+                    value={data.monthlyAmount}
+                    onChange={e => set('monthlyAmount', e.target.value)}
+                    placeholder={data.monthlyCurrency === 'USD' ? '500.00' : '145000'}
+                  />
+                </div>
               </div>
-              <div>
-                <label className={LABEL}>Amount ({data.monthlyCurrency})</label>
-                <input
-                  className={INPUT}
-                  type="text"
-                  value={data.monthlyAmount}
-                  onChange={e => set('monthlyAmount', e.target.value)}
-                  placeholder={data.monthlyCurrency === 'USD' ? '500.00' : '145000'}
-                />
-              </div>
-              <div>
-                <label className={LABEL}>Billing Month</label>
-                <input
-                  className={INPUT}
-                  type="text"
-                  value={data.billingMonth}
-                  onChange={e => set('billingMonth', e.target.value)}
-                  placeholder="January 2024"
-                />
-              </div>
-              <div>
-                <label className={LABEL}>Description</label>
-                <input
-                  className={INPUT}
-                  type="text"
-                  value={data.monthlyDescription}
-                  onChange={e => set('monthlyDescription', e.target.value)}
-                  placeholder="Design Strategy & Editorial Direction Retainer"
-                />
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label className={LABEL}>Billing Month</label>
+                  <input
+                    className={INPUT}
+                    type="text"
+                    value={data.billingMonth}
+                    onChange={e => set('billingMonth', e.target.value)}
+                    placeholder="January 2024"
+                  />
+                </div>
+                <div>
+                  <label className={LABEL}>Description</label>
+                  <input
+                    className={INPUT}
+                    type="text"
+                    value={data.monthlyDescription}
+                    onChange={e => set('monthlyDescription', e.target.value)}
+                    placeholder="Design Strategy & Editorial Direction Retainer"
+                  />
+                </div>
               </div>
             </div>
           </div>
