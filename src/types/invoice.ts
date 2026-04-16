@@ -1,7 +1,7 @@
 export interface InvoiceItem {
   id: string;
   description: string;
-  quantity?: number;
+  quantity: number;
   currency: 'USD' | 'PKR';
   unitPrice: number;
 }
@@ -50,11 +50,11 @@ export const defaultInvoiceData: InvoiceData = {
   oneTimeCurrency: 'USD',
   monthlyCurrency: 'PKR',
   billingType: 'monthly-retainer',
-  monthlyAmount: '5000',
+  monthlyAmount: '10',
   billingMonth: 'January 2024',
   monthlyDescription: 'Design Strategy & Editorial Direction Retainer',
   items: [
-    { id: '1', description: 'Design Strategy & Editorial Direction', currency: 'USD', unitPrice: 5000 }
+    { id: '1', description: 'Design Strategy & Editorial Direction', quantity: 1, currency: 'USD', unitPrice: 10 }
   ],
   taxRate: 0,
   notes: 'Thank you for your business!',

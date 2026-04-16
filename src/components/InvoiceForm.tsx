@@ -35,6 +35,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({ data, onChange }) => {
     const newItem: InvoiceItem = {
       id: Math.random().toString(36).substr(2, 9),
       description: '',
+      quantity: 1,
       currency: 'USD',
       unitPrice: 0
     };
@@ -214,8 +215,8 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({ data, onChange }) => {
                   <div className="absolute left-4 top-2 text-[10px] font-bold text-slate-300 sm:static sm:mb-2">
                     ITEM {index + 1}
                   </div>
-                  <div className="grid gap-4 sm:grid-cols-12 sm:items-end">
-                    <div className="sm:col-span-6">
+                  <div className="grid gap-3 sm:grid-cols-12 sm:items-end">
+                    <div className="sm:col-span-5">
                       <label className={LABEL}>Description</label>
                       <input
                         className={INPUT}
@@ -223,6 +224,16 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({ data, onChange }) => {
                         value={item.description}
                         onChange={e => updateItem(item.id, 'description', e.target.value)}
                         placeholder="Service or product description"
+                      />
+                    </div>
+                    <div className="sm:col-span-1">
+                      <label className={LABEL}>Qty</label>
+                      <input
+                        className={INPUT}
+                        type="number"
+                        min={1}
+                        value={item.quantity}
+                        onChange={e => updateItem(item.id, 'quantity', Math.max(1, parseInt(e.target.value) || 1))}
                       />
                     </div>
                     <div className="sm:col-span-2">
@@ -237,7 +248,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({ data, onChange }) => {
                       </select>
                     </div>
                     <div className="sm:col-span-3">
-                      <label className={LABEL}>Price ({item.currency})</label>
+                      <label className={LABEL}>Amount ({item.currency})</label>
                       <input
                         className={INPUT}
                         type="number"

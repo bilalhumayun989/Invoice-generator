@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import type { InvoiceData } from '../types/invoice';
 
 interface InvoicePreviewProps {
   data: InvoiceData;
+  onPrint?: (fn: () => void) => void;
 }
 
 const exchangeRate = 290;
@@ -10,10 +11,10 @@ const convertToPKR = (value: number, currency: 'USD' | 'PKR') => currency === 'U
 const formatAmount = (value: number) => value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const parseAmount = (value: string) => Number(value.toString().replace(/,/g, '')) || 0;
 
-export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data }) => {
-  const oneTimePKR = (data.items || []).reduce((acc, item) => acc + convertToPKR(item.unitPrice || 0, item.currency || 'PKR'), 0);
-  const oneTimeValueUSD = (data.items || []).filter(i => i.currency === 'USD').reduce((acc, item) => acc + (item.unitPrice || 0), 0);
-  const oneTimeValuePKR = (data.items || []).filter(i => i.currency === 'PKR').reduce((acc, item) => acc + (item.unitPrice || 0), 0);
+export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, onPrint }) => {
+  const oneTimePKR = (data.items || []).reduce((acc, item) => acc + convertToPKR((item.unitPrice || 0) * (item.quantity || 1), item.currency || 'PKR'), 0);
+  const oneTimeValueUSD = (data.items || []).filter(i => i.currency === 'USD').reduce((acc, item) => acc + (item.unitPrice || 0) * (item.quantity || 1), 0);
+  const oneTimeValuePKR = (data.items || []).filter(i => i.currency === 'PKR').reduce((acc, item) => acc + (item.unitPrice || 0) * (item.quantity || 1), 0);
 
   const monthlyValue = parseAmount(data.monthlyAmount || '0');
   const monthlyCurrency = data.monthlyCurrency || 'PKR';
@@ -340,11 +341,22 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data }) => {
             .invoice-container { 
                 box-shadow: none; 
                 border-radius: 0; 
-                max-width: 100%; 
-                min-height: 100vh;
-                height: 297mm;
+                max-width: 100%;
+                min-height: unset;
+                height: auto;
             }
-            @page { size: A4; margin: 0; }
+            .header { padding: 16px 24px; }
+            .company-name { font-size: 18px; }
+            .invoice-number { font-size: 22px; }
+            .content-body { padding: 0 24px 16px; }
+            .info-card { padding: 10px; }
+            .billing-item { padding: 10px; margin-bottom: 8px; }
+            .account-details { padding: 12px; margin-bottom: 14px; }
+            .total-container { padding: 12px; }
+            .billing-section { margin-bottom: 14px; }
+            .section-title { margin-bottom: 8px; }
+            .grid-2 { margin-bottom: 14px; }
+            @page { size: A4; margin: 8mm; }
         }
     </style>
 </head>
@@ -391,20 +403,24 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data }) => {
                                 <span class="billing-price">Subtotal: PKR ${formatAmount(oneTimePKR)}</span>
                             </div>
                             
-                            <table style="width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 11px;">
+                            <table style="width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 10px;">
                                 <thead>
                                     <tr style="border-bottom: 1px solid var(--border); text-align: left; color: var(--text-muted);">
-                                        <th style="padding: 8px 0; width: 60%;">Description</th>
-                                        <th style="padding: 8px 0; text-align: right; width: 15%;">Currency</th>
-                                        <th style="padding: 8px 0; text-align: right; width: 25%;">Amount</th>
+                                        <th style="padding: 5px 0; width: 45%;">Description</th>
+                                        <th style="padding: 5px 0; text-align: center; width: 8%;">Qty</th>
+                                        <th style="padding: 5px 0; text-align: right; width: 14%;">Currency</th>
+                                        <th style="padding: 5px 0; text-align: right; width: 17%;">Unit Price</th>
+                                        <th style="padding: 5px 0; text-align: right; width: 16%;">Total</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     ${(data.items || []).map(item => `
                                         <tr style="border-bottom: 1px dashed var(--border);">
-                                            <td style="padding: 8px 0;">${item.description}</td>
-                                            <td style="padding: 8px 0; text-align: right; color: var(--text-muted);">${item.currency}</td>
-                                            <td style="padding: 8px 0; text-align: right; font-weight: 600;">${item.currency === 'USD' ? '$' : ''}${formatAmount(item.unitPrice)}</td>
+                                            <td style="padding: 5px 0;">${item.description || '&mdash;'}</td>
+                                            <td style="padding: 5px 0; text-align: center;">${item.quantity || 1}</td>
+                                            <td style="padding: 5px 0; text-align: right; color: var(--text-muted);">${item.currency}</td>
+                                            <td style="padding: 5px 0; text-align: right;">${item.currency === 'USD' ? '$' : 'PKR '}${formatAmount(item.unitPrice)}</td>
+                                            <td style="padding: 5px 0; text-align: right; font-weight: 600;">${item.currency === 'USD' ? '$' : 'PKR '}${formatAmount((item.unitPrice || 0) * (item.quantity || 1))}</td>
                                         </tr>
                                     `).join('')}
                                 </tbody>
@@ -517,6 +533,11 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data }) => {
     }
   };
 
+  // Register handlePrint with parent so navbar Download PDF button can trigger it
+  useEffect(() => {
+    onPrint?.(handlePrint);
+  }, [data]);
+
   return (
     <div className="space-y-6 sm:space-y-10 invoice-printable">
       <div className="rounded-[20px] border border-slate-200 bg-white p-4 sm:p-8 shadow-xl">
@@ -553,18 +574,24 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data }) => {
                 <table className="w-full text-left">
                   <thead>
                     <tr className="border-b border-slate-100 text-[10px] uppercase tracking-wider text-slate-400">
-                      <th className="pb-3 font-semibold w-1/2">Description</th>
+                      <th className="pb-3 font-semibold w-2/5">Description</th>
+                      <th className="pb-3 font-semibold text-center">Qty</th>
                       <th className="pb-3 font-semibold text-center">Currency</th>
-                      <th className="pb-3 font-semibold text-right">Amount</th>
+                      <th className="pb-3 font-semibold text-right">Unit Price</th>
+                      <th className="pb-3 font-semibold text-right">Total</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-50">
+                  <tbody className="divide-y divide-slate-100">
                     {(data.items || []).map((item) => (
                       <tr key={item.id}>
                         <td className="py-3 pr-4 text-slate-700">{item.description || '—'}</td>
+                        <td className="py-3 text-center text-slate-600">{item.quantity || 1}</td>
                         <td className="py-3 text-center text-slate-500 font-medium">{item.currency}</td>
-                        <td className="py-3 text-right font-semibold text-slate-900">
+                        <td className="py-3 text-right text-slate-600">
                           {item.currency === 'USD' ? '$' : 'PKR '}{formatAmount(item.unitPrice)}
+                        </td>
+                        <td className="py-3 text-right font-semibold text-slate-900">
+                          {item.currency === 'USD' ? '$' : 'PKR '}{formatAmount((item.unitPrice || 0) * (item.quantity || 1))}
                         </td>
                       </tr>
                     ))}
@@ -574,12 +601,12 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data }) => {
               
               <div className="mt-4 pt-4 border-t border-slate-100 flex flex-col items-end gap-2 text-right">
                 <div className="space-y-1">
-                   {oneTimeValueUSD > 0 && (
+                  {oneTimeValueUSD > 0 && (
                     <p className="text-xs text-slate-500 italic">
                       USD Subtotal: ${formatAmount(oneTimeValueUSD)} ≈ PKR {formatAmount(oneTimeValueUSD * exchangeRate)}
                     </p>
                   )}
-                   {oneTimeValuePKR > 0 && (
+                  {oneTimeValuePKR > 0 && (
                     <p className="text-xs text-slate-500 italic">
                       PKR Subtotal: PKR {formatAmount(oneTimeValuePKR)}
                     </p>
