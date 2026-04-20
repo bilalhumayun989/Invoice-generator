@@ -30,6 +30,8 @@ export interface InvoiceData {
   discountCurrency: 'USD' | 'PKR';
   discountPercent: string;
   discountAmount: string;
+  advanceCurrency: 'USD' | 'PKR';
+  advanceAmount: string;
   items: InvoiceItem[];
   taxRate: number;
   notes: string;
@@ -59,6 +61,8 @@ export const defaultInvoiceData: InvoiceData = {
   discountCurrency: 'PKR',
   discountPercent: '0',
   discountAmount: '0',
+  advanceCurrency: 'PKR',
+  advanceAmount: '0',
   items: [
     { id: '1', description: 'Design Strategy & Editorial Direction', quantity: 1, currency: 'USD', unitPrice: 10 }
   ],

@@ -34,6 +34,19 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, onPrint })
 
   const totalAfterDiscountPKR = totalPKR - discountAmountPKR;
 
+  // Advance Payment calculations
+  const advanceCurrency = data.advanceCurrency === 'USD' ? 'USD' : 'PKR';
+  const advanceAmount = parseAmount(data.advanceAmount || '0');
+  const advanceAmountPKR = advanceCurrency === 'USD'
+    ? Math.max(0, advanceAmount * exchangeRate)
+    : Math.max(0, advanceAmount);
+  
+  const advanceLabel = advanceCurrency === 'USD'
+    ? `Advance Paid (USD ${formatAmount(advanceAmount)})`
+    : `Advance Paid (PKR ${formatAmount(advanceAmount)})`;
+
+  const remainingBalancePKR = totalAfterDiscountPKR - advanceAmountPKR;
+
   const handlePrint = () => {
     const html = `<!DOCTYPE html>
 <html lang="en">
@@ -327,9 +340,34 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, onPrint })
         }
 
         .total-row.grand .val {
+            font-size: 20px;
+            font-weight: 800;
+            color: var(--primary);
+        }
+
+        .total-row.balance {
+            margin-top: 12px;
+            padding-top: 16px;
+            border-top: 2px solid var(--border);
+            background: #dcfce7;
+            padding: 16px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+        }
+
+        .total-row.balance .label {
+            font-size: 16px;
+            font-weight: 800;
+            color: #166534;
+        }
+
+        .total-row.balance .val {
             font-size: 28px;
             font-weight: 800;
-            color: #0c3721;
+            color: #166534;
         }
 
         .footer {
@@ -518,9 +556,24 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, onPrint })
                         </div>
                     ` : ''}
                     <div class="total-row grand">
-                        <span class="label">Total Amount</span>
+                        <span class="label">Invoice Total</span>
                         <span class="val">PKR ${formatAmount(totalAfterDiscountPKR)}</span>
                     </div>
+                    ${advanceAmountPKR > 0 ? `
+                        <div class="total-row">
+                            <span class="label">${advanceLabel}</span>
+                            <span class="val" style="color: #16a34a; font-weight: 600;">- PKR ${formatAmount(advanceAmountPKR)}</span>
+                        </div>
+                        <div class="total-row balance">
+                            <span class="label">Remaining Balance</span>
+                            <span class="val">PKR ${formatAmount(remainingBalancePKR)}</span>
+                        </div>
+                    ` : `
+                        <div class="total-row balance">
+                            <span class="label">Amount Due</span>
+                            <span class="val">PKR ${formatAmount(remainingBalancePKR)}</span>
+                        </div>
+                    `}
                 </div>
             </div>
 
@@ -682,8 +735,8 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, onPrint })
           <p className="text-[10px] sm:text-xs uppercase tracking-[0.35em] text-slate-500">Invoice Total</p>
           <div className="mt-6 space-y-4 rounded-[18px] bg-slate-50 p-6 border border-slate-100">
             <div className="flex items-center justify-between gap-4">
-              <span className="text-sm uppercase tracking-[0.24em] text-slate-600">Grand Total</span>
-              <span className="text-3xl font-bold" style={{ color: '#0c3721' }}>PKR {formatAmount(totalAfterDiscountPKR)}</span>
+              <span className="text-sm uppercase tracking-[0.24em] text-slate-600">Subtotal</span>
+              <span className="text-2xl font-bold text-slate-900">PKR {formatAmount(totalAfterDiscountPKR)}</span>
             </div>
             {discountAmountPKR > 0 && (
               <div className="flex items-center justify-between gap-4 text-sm text-slate-500">
@@ -691,6 +744,17 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, onPrint })
                 <span>- PKR {formatAmount(discountAmountPKR)}</span>
               </div>
             )}
+            {advanceAmountPKR > 0 && (
+              <div className="flex items-center justify-between gap-4 text-sm text-green-600 font-medium">
+                <span>{advanceLabel}</span>
+                <span>- PKR {formatAmount(advanceAmountPKR)}</span>
+              </div>
+            )}
+            
+            <div className="mt-4 pt-4 border-t-2 border-slate-200 flex items-center justify-between gap-4">
+              <span className="text-sm uppercase tracking-[0.24em] font-bold text-slate-800">Remaining Balance</span>
+              <span className="text-4xl font-extrabold" style={{ color: '#0c3721' }}>PKR {formatAmount(remainingBalancePKR)}</span>
+            </div>
           </div>
         </div>
 

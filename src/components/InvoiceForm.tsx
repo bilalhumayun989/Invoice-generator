@@ -376,6 +376,44 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({ data, onChange }) => {
               </p>
             </div>
           </div>
+
+          <div className="w-full min-w-0 rounded-[18px] border border-slate-200 bg-white p-5 sm:p-6">
+            <p className="text-xs uppercase tracking-[0.35em] text-slate-500">Advance Payment</p>
+            <div className="mt-4 grid gap-4 flex items-start sm:grid-cols-2">
+              <div>
+                <label className={LABEL}>Advance Currency</label>
+                <select
+                  className={INPUT}
+                  value={data.advanceCurrency === 'USD' ? 'USD' : 'PKR'}
+                  onChange={e => set('advanceCurrency', e.target.value as any)}
+                >
+                  <option value="PKR">PKR</option>
+                  <option value="USD">USD</option>
+                </select>
+              </div>
+              <div>
+                <label className={LABEL}>
+                  {data.advanceCurrency === 'USD' ? 'Advance Amount (USD)' : 'Advance Amount (PKR)'}
+                </label>
+                <input
+                  className={INPUT}
+                  type="number"
+                  min={0}
+                  step="any"
+                  value={data.advanceAmount}
+                  onChange={e => set('advanceAmount', e.target.value)}
+                  placeholder="0.00"
+                />
+              </div>
+            </div>
+            <div className="mt-4 text-sm text-slate-500">
+              <p>
+                {data.advanceCurrency === 'USD' 
+                  ? 'An advance payment received in USD. 1 USD = 290 PKR.' 
+                  : 'An advance payment received in PKR.'}
+              </p>
+            </div>
+          </div>
         </div>
       </SectionCard>
     </div>
