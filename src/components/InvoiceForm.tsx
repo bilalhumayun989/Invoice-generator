@@ -343,20 +343,37 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({ data, onChange }) => {
             <p className="text-xs uppercase tracking-[0.35em] text-slate-500">Discount</p>
             <div className="mt-4 grid gap-4 flex items-start sm:grid-cols-2">
               <div>
-                <label className={LABEL}>Discount (%)</label>
+                <label className={LABEL}>Discount Currency</label>
+                <select
+                  className={INPUT}
+                  value={data.discountCurrency === 'USD' ? 'USD' : 'PKR'}
+                  onChange={e => set('discountCurrency', e.target.value as any)}
+                >
+                  <option value="PKR">PKR</option>
+                  <option value="USD">USD</option>
+                </select>
+              </div>
+              <div>
+                <label className={LABEL}>
+                  {data.discountCurrency === 'USD' ? 'Discount Amount (USD)' : 'Discount Amount (PKR)'}
+                </label>
                 <input
                   className={INPUT}
                   type="number"
                   min={0}
                   step="any"
-                  value={data.discountPercent}
-                  onChange={e => set('discountPercent', e.target.value)}
-                  placeholder="0"
+                  value={data.discountAmount}
+                  onChange={e => set('discountAmount', e.target.value)}
+                  placeholder="0.00"
                 />
               </div>
-              <div className="flex items-center pt-2 sm:pt-8 text-sm text-slate-500">
-                <p>Enter the discount percentage to apply to the grand total.</p>
-              </div>
+            </div>
+            <div className="mt-4 text-sm text-slate-500">
+              <p>
+                {data.discountCurrency === 'USD' 
+                  ? 'A fixed discount amount in USD. 1 USD = 290 PKR.' 
+                  : 'A fixed discount amount in PKR.'}
+              </p>
             </div>
           </div>
         </div>

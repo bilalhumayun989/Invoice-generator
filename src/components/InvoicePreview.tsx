@@ -20,10 +20,19 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, onPrint })
   const monthlyCurrency = data.monthlyCurrency || 'PKR';
   const monthlyPKR = convertToPKR(monthlyValue, monthlyCurrency as 'USD' | 'PKR');
   const totalPKR = oneTimePKR + monthlyPKR;
-  const discountPercent = parseAmount(data.discountPercent || '0');
-  const discountAmountPKR = Math.max(0, totalPKR * (discountPercent / 100));
+  const discountCurrency = data.discountCurrency === 'USD' ? 'USD' : 'PKR';
+  const discountAmount = parseAmount(data.discountAmount || '0');
+  
+  // Fixed discount amount handling
+  const discountAmountPKR = discountCurrency === 'USD'
+    ? Math.max(0, discountAmount * exchangeRate)
+    : Math.max(0, discountAmount);
+  
+  const discountLabel = discountCurrency === 'USD'
+    ? `Discount (USD ${formatAmount(discountAmount)})`
+    : `Discount (PKR ${formatAmount(discountAmount)})`;
+
   const totalAfterDiscountPKR = totalPKR - discountAmountPKR;
-  const discountLabel = `Discount (${formatAmount(discountPercent)}%)`;
 
   const handlePrint = () => {
     const html = `<!DOCTYPE html>
