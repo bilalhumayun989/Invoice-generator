@@ -25,7 +25,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({ data, onChange }) => {
   const set = (field: keyof InvoiceData, value: string) => onChange({ ...data, [field]: value } as InvoiceData);
 
   const updateItem = (id: string, field: keyof InvoiceItem, value: any) => {
-    const newItems = data.items.map(item => 
+    const newItems = data.items.map(item =>
       item.id === id ? { ...item, [field]: value } : item
     );
     onChange({ ...data, items: newItems });
@@ -335,6 +335,27 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({ data, onChange }) => {
                     placeholder="Design Strategy & Editorial Direction Retainer"
                   />
                 </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="w-full min-w-0 rounded-[18px] border border-slate-200 bg-white p-5 sm:p-6">
+            <p className="text-xs uppercase tracking-[0.35em] text-slate-500">Discount</p>
+            <div className="mt-4 grid gap-4 flex items-start sm:grid-cols-2">
+              <div>
+                <label className={LABEL}>Discount (%)</label>
+                <input
+                  className={INPUT}
+                  type="number"
+                  min={0}
+                  step="any"
+                  value={data.discountPercent}
+                  onChange={e => set('discountPercent', e.target.value)}
+                  placeholder="0"
+                />
+              </div>
+              <div className="flex items-center pt-2 sm:pt-8 text-sm text-slate-500">
+                <p>Enter the discount percentage to apply to the grand total.</p>
               </div>
             </div>
           </div>

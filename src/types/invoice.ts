@@ -27,6 +27,9 @@ export interface InvoiceData {
   monthlyAmount: string;
   billingMonth: string;
   monthlyDescription: string;
+  discountCurrency: 'USD' | 'PKR';
+  discountPercent: string;
+  discountAmount: string;
   items: InvoiceItem[];
   taxRate: number;
   notes: string;
@@ -53,6 +56,9 @@ export const defaultInvoiceData: InvoiceData = {
   monthlyAmount: '10',
   billingMonth: 'January 2024',
   monthlyDescription: 'Design Strategy & Editorial Direction Retainer',
+  discountCurrency: 'PKR',
+  discountPercent: '0',
+  discountAmount: '0',
   items: [
     { id: '1', description: 'Design Strategy & Editorial Direction', quantity: 1, currency: 'USD', unitPrice: 10 }
   ],

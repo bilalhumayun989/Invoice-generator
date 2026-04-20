@@ -20,6 +20,10 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, onPrint })
   const monthlyCurrency = data.monthlyCurrency || 'PKR';
   const monthlyPKR = convertToPKR(monthlyValue, monthlyCurrency as 'USD' | 'PKR');
   const totalPKR = oneTimePKR + monthlyPKR;
+  const discountPercent = parseAmount(data.discountPercent || '0');
+  const discountAmountPKR = Math.max(0, totalPKR * (discountPercent / 100));
+  const totalAfterDiscountPKR = totalPKR - discountAmountPKR;
+  const discountLabel = `Discount (${formatAmount(discountPercent)}%)`;
 
   const handlePrint = () => {
     const html = `<!DOCTYPE html>
@@ -465,13 +469,17 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, onPrint })
                     ` : ''}
                 </section>
 
-                    ${data.bankName || data.accountNumber ? `
+                    ${data.bankName || data.accountNumber || data.accountTitle ? `
                         <section class="billing-section">
                             <div class="section-title">Account Information</div>
                             <div class="account-details">
                                 <div class="account-item">
                                     <div class="label">Bank Name</div>
                                     <div class="val">${data.bankName || '—'}</div>
+                                </div>
+                                <div class="account-item">
+                                    <div class="label">Account Title</div>
+                                    <div class="val">${data.accountTitle || '—'}</div>
                                 </div>
                                 <div class="account-item">
                                     <div class="label">Account Number</div>
@@ -494,9 +502,15 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, onPrint })
                             <span class="val">PKR ${formatAmount(monthlyPKR)}</span>
                         </div>
                     ` : ''}
+                    ${discountAmountPKR > 0 ? `
+                        <div class="total-row">
+                            <span class="label">${discountLabel}</span>
+                            <span class="val">- PKR ${formatAmount(discountAmountPKR)}</span>
+                        </div>
+                    ` : ''}
                     <div class="total-row grand">
                         <span class="label">Total Amount</span>
-                        <span class="val">PKR ${formatAmount(totalPKR)}</span>
+                        <span class="val">PKR ${formatAmount(totalAfterDiscountPKR)}</span>
                     </div>
                 </div>
             </div>
@@ -598,7 +612,7 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, onPrint })
                   </tbody>
                 </table>
               </div>
-              
+
               <div className="mt-4 pt-4 border-t border-slate-100 flex flex-col items-end gap-2 text-right">
                 <div className="space-y-1">
                   {oneTimeValueUSD > 0 && (
@@ -635,13 +649,17 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, onPrint })
           )}
         </div>
 
-        {(data.bankName || data.accountNumber) && (
+        {(data.bankName || data.accountNumber || data.accountTitle) && (
           <div className="mt-8 rounded-[18px] border border-slate-200 bg-slate-50 p-4 sm:p-6">
             <p className="text-[10px] sm:text-xs uppercase tracking-[0.35em] text-slate-500">Account Details</p>
-            <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            <div className="mt-4 grid gap-4 sm:grid-cols-3">
               <div>
                 <p className="text-[9px] sm:text-[11px] uppercase tracking-[0.25em] text-slate-500">Bank Name</p>
                 <p className="mt-1 sm:mt-2 text-sm leading-7 text-slate-600">{data.bankName || '—'}</p>
+              </div>
+              <div>
+                <p className="text-[9px] sm:text-[11px] uppercase tracking-[0.25em] text-slate-500">Account Title</p>
+                <p className="mt-1 sm:mt-2 text-sm leading-7 text-slate-600">{data.accountTitle || '—'}</p>
               </div>
               <div>
                 <p className="text-[9px] sm:text-[11px] uppercase tracking-[0.25em] text-slate-500">Account Number</p>
@@ -656,8 +674,14 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, onPrint })
           <div className="mt-6 space-y-4 rounded-[18px] bg-slate-50 p-6 border border-slate-100">
             <div className="flex items-center justify-between gap-4">
               <span className="text-sm uppercase tracking-[0.24em] text-slate-600">Grand Total</span>
-              <span className="text-3xl font-bold" style={{ color: '#0c3721' }}>PKR {formatAmount(totalPKR)}</span>
+              <span className="text-3xl font-bold" style={{ color: '#0c3721' }}>PKR {formatAmount(totalAfterDiscountPKR)}</span>
             </div>
+            {discountAmountPKR > 0 && (
+              <div className="flex items-center justify-between gap-4 text-sm text-slate-500">
+                <span>{discountLabel}</span>
+                <span>- PKR {formatAmount(discountAmountPKR)}</span>
+              </div>
+            )}
           </div>
         </div>
 
