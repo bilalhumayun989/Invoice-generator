@@ -38,7 +38,7 @@ export interface InvoiceData {
 }
 
 export const defaultInvoiceData: InvoiceData = {
-  invoiceNumber: 'INV-2024-001',
+  invoiceNumber: 'INV-2026-001',
   issueDate: new Date().toISOString().split('T')[0],
   dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
   companyName: 'BROSHTECH ',
@@ -56,7 +56,7 @@ export const defaultInvoiceData: InvoiceData = {
   monthlyCurrency: 'PKR',
   billingType: 'monthly-retainer',
   monthlyAmount: '10',
-  billingMonth: 'January 2024',
+  billingMonth: 'January 2026',
   monthlyDescription: 'Design Strategy & Editorial Direction Retainer',
   discountCurrency: 'PKR',
   discountPercent: '0',

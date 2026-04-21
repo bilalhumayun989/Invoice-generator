@@ -6,7 +6,7 @@ interface InvoicePreviewProps {
   onPrint?: (fn: () => void) => void;
 }
 
-const exchangeRate = 290;
+const exchangeRate = 280;
 const convertToPKR = (value: number, currency: 'USD' | 'PKR') => currency === 'USD' ? value * exchangeRate : value;
 const formatAmount = (value: number) => value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const parseAmount = (value: string) => Number(value.toString().replace(/,/g, '')) || 0;
@@ -479,10 +479,6 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, onPrint })
 
                             <!-- Summary for USD items if any -->
                             ${oneTimeValueUSD > 0 ? `
-                                <div class="billing-row" style="margin-top: 12px; padding-top: 8px; border-top: 1px solid var(--border);">
-                                    <span>Exchange Rate</span>
-                                    <span>1 USD = ${exchangeRate} PKR</span>
-                                </div>
                                 <div class="billing-row">
                                     <span>USD Subtotal in PKR</span>
                                     <strong>PKR ${formatAmount(oneTimeValueUSD * exchangeRate)}</strong>
@@ -502,10 +498,6 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, onPrint })
                                 <span>${data.billingMonth || 'Current Month'}</span>
                             </div>
                             ${monthlyCurrency === 'USD' ? `
-                                <div class="billing-row">
-                                    <span>Exchange Rate</span>
-                                    <span>1 USD = ${exchangeRate} PKR</span>
-                                </div>
                                 <div class="billing-row">
                                     <span>Amount in PKR</span>
                                     <strong>PKR ${formatAmount(monthlyValue * exchangeRate)}</strong>
