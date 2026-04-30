@@ -6,6 +6,16 @@ export interface InvoiceItem {
   unitPrice: number;
 }
 
+export interface Milestone {
+  id: string;
+  title: string;
+  description?: string;
+  amount: string;
+  currency: 'USD' | 'PKR';
+  dueDate: string;
+  status: 'Pending' | 'Paid';
+}
+
 export interface InvoiceData {
   invoiceNumber: string;
   issueDate: string;
@@ -32,6 +42,10 @@ export interface InvoiceData {
   discountAmount: string;
   advanceCurrency: 'USD' | 'PKR';
   advanceAmount: string;
+  advanceDate: string;
+  advanceStatus: 'Pending' | 'Paid';
+  isMilestonePayment: boolean;
+  milestones: Milestone[];
   items: InvoiceItem[];
   taxRate: number;
   notes: string;
@@ -63,6 +77,10 @@ export const defaultInvoiceData: InvoiceData = {
   discountAmount: '0',
   advanceCurrency: 'PKR',
   advanceAmount: '0',
+  advanceDate: new Date().toISOString().split('T')[0],
+  advanceStatus: 'Pending',
+  isMilestonePayment: false,
+  milestones: [],
   items: [
     { id: '1', description: 'Design Strategy & Editorial Direction', quantity: 1, currency: 'USD', unitPrice: 10 }
   ],
