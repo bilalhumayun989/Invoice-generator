@@ -39,13 +39,13 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, onPrint })
     amountPKR: convertToPKR(parseAmount(m.amount), m.currency)
   }));
 
-  const totalPaidPKR = (data.advanceStatus === 'Paid' ? advanceAmountPKR : 0) + 
-                       milestonePayments.filter(m => m.status === 'Paid').reduce((acc, m) => acc + m.amountPKR, 0);
-  
+  const totalPaidPKR = (data.advanceStatus === 'Paid' ? advanceAmountPKR : 0) +
+    milestonePayments.filter(m => m.status === 'Paid').reduce((acc, m) => acc + m.amountPKR, 0);
+
   // Outstanding Balance calculation
-  const remainingBalancePKR = data.isMilestonePayment 
-    ? (data.advanceStatus === 'Pending' ? advanceAmountPKR : 0) + 
-      milestonePayments.filter(m => m.status === 'Pending').reduce((acc, m) => acc + m.amountPKR, 0)
+  const remainingBalancePKR = data.isMilestonePayment
+    ? (data.advanceStatus === 'Pending' ? advanceAmountPKR : 0) +
+    milestonePayments.filter(m => m.status === 'Pending').reduce((acc, m) => acc + m.amountPKR, 0)
     : totalAfterDiscountPKR - (data.advanceStatus === 'Paid' ? advanceAmountPKR : 0);
 
   const handlePrint = () => {
@@ -215,6 +215,23 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, onPrint })
                         <div class="name">${data.clientName}</div>
                         <div class="details">${data.clientAddress.replace(/\n/g, '<br/>')}<br/>${data.clientEmail}<br/>${data.clientPhone}</div>
                     </div>
+                    <div class="info-card">
+    <h3>Banking Details</h3>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 12px;">
+        <div>
+            <div style="font-size: 9px; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Bank</div>
+            <div style="font-weight: 600; color: var(--primary);">${data.bankName || '—'}</div>
+        </div>
+        <div>
+            <div style="font-size: 9px; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Title</div>
+            <div style="font-weight: 600; color: var(--primary);">${data.accountTitle || '—'}</div>
+        </div>
+        <div style="grid-column: span 2;">
+            <div style="font-size: 9px; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Account / IBAN</div>
+            <div style="font-weight: 700; font-family: monospace; background: #f8fafc; border: 1px solid var(--border); border-radius: 6px; padding: 6px 8px; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.05em;">${data.accountNumber || '—'}</div>
+        </div>
+    </div>
+</div>
                 </div>
 
                 <section class="billing-section">
@@ -258,8 +275,8 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, onPrint })
                             <div class="m-amount">PKR ${formatAmount(advanceAmountPKR)}</div>
                         </div>
                         ${milestonePayments.map(m => {
-                            const isOverdue = m.status === 'Pending' && m.dueDate && new Date(m.dueDate) < new Date();
-                            return `
+      const isOverdue = m.status === 'Pending' && m.dueDate && new Date(m.dueDate) < new Date();
+      return `
                                 <div class="milestone-row">
                                     <div class="m-info">
                                         <span class="m-title" style="${isOverdue ? 'color: #991b1b;' : ''}">${m.title}</span>
@@ -269,7 +286,7 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, onPrint })
                                     <div class="m-amount">PKR ${formatAmount(m.amountPKR)}</div>
                                 </div>
                             `;
-                        }).join('')}
+    }).join('')}
                     </div>
                 </section>
                 ` : ''}
@@ -321,7 +338,7 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, onPrint })
     <div className="space-y-10 invoice-printable">
       <div className="rounded-[24px] border border-slate-200 bg-white p-8 shadow-2xl overflow-hidden relative">
         <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-slate-900 via-blue-500 to-slate-900"></div>
-        
+
         <div className="flex flex-col gap-8 lg:flex-row lg:justify-between">
           <div className="space-y-4">
             <p className="text-[10px] uppercase tracking-[0.4em] text-blue-500 font-bold">From</p>
@@ -337,8 +354,8 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, onPrint })
             <p className="text-[10px] uppercase tracking-[0.4em] text-slate-400 font-bold">Invoice Reference</p>
             <p className="text-4xl font-black text-slate-950 mt-2">{data.invoiceNumber}</p>
             <div className="mt-4 pt-4 border-t border-slate-200 flex justify-between items-center">
-               <span className="text-xs text-slate-500 uppercase tracking-widest font-bold">Issued</span>
-               <span className="text-sm font-semibold text-slate-900">{data.issueDate}</span>
+              <span className="text-xs text-slate-500 uppercase tracking-widest font-bold">Issued</span>
+              <span className="text-sm font-semibold text-slate-900">{data.issueDate}</span>
             </div>
           </div>
         </div>
@@ -355,21 +372,21 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, onPrint })
           </div>
 
           <div className="p-6 rounded-2xl border border-slate-200 bg-slate-50/50">
-             <p className="text-[10px] uppercase tracking-[0.4em] text-slate-400 font-bold mb-4">Banking Details</p>
-             <div className="grid grid-cols-2 gap-4">
-                <div>
-                   <p className="text-[10px] uppercase text-slate-400 font-bold">Bank</p>
-                   <p className="text-sm font-semibold text-slate-800">{data.bankName || '—'}</p>
-                </div>
-                <div>
-                   <p className="text-[10px] uppercase text-slate-400 font-bold">Title</p>
-                   <p className="text-sm font-semibold text-slate-800">{data.accountTitle || '—'}</p>
-                </div>
-                <div className="col-span-2">
-                   <p className="text-[10px] uppercase text-slate-400 font-bold">Account / IBAN</p>
-                   <p className="text-sm font-bold text-slate-900 tracking-wider font-mono bg-white p-2 rounded border border-slate-100 mt-1 uppercase">{data.accountNumber || '—'}</p>
-                </div>
-             </div>
+            <p className="text-[10px] uppercase tracking-[0.4em] text-slate-400 font-bold mb-4">Banking Details</p>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-[10px] uppercase text-slate-400 font-bold">Bank</p>
+                <p className="text-sm font-semibold text-slate-800">{data.bankName || '—'}</p>
+              </div>
+              <div>
+                <p className="text-[10px] uppercase text-slate-400 font-bold">Title</p>
+                <p className="text-sm font-semibold text-slate-800">{data.accountTitle || '—'}</p>
+              </div>
+              <div className="col-span-2">
+                <p className="text-[10px] uppercase text-slate-400 font-bold">Account / IBAN</p>
+                <p className="text-sm font-bold text-slate-900 tracking-wider font-mono bg-white p-2 rounded border border-slate-100 mt-1 uppercase">{data.accountNumber || '—'}</p>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -439,7 +456,7 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, onPrint })
 
         <div className="mt-12 p-8 rounded-[32px] bg-slate-900 text-white relative overflow-hidden">
           <div className="absolute -top-24 -right-24 w-64 h-64 bg-blue-500/20 rounded-full blur-[80px]"></div>
-          
+
           <div className="grid gap-6 sm:grid-cols-3 relative z-10">
             <div className="space-y-1">
               <p className="text-[10px] uppercase tracking-widest text-slate-400 font-bold">Gross Total</p>
@@ -462,7 +479,7 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, onPrint })
             className="group relative flex items-center gap-3 bg-slate-950 text-white px-10 py-5 rounded-2xl font-black uppercase tracking-widest transition-all hover:bg-black hover:scale-[1.02] active:scale-95 shadow-xl"
           >
             <span>Generate Official PDF</span>
-            <svg className="w-5 h-5 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+            <svg className="w-5 h-5 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
           </button>
         </div>
       </div>
