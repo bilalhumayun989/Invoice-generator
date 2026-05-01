@@ -80,10 +80,10 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, onPrint })
         }
 
         .page-wrapper {
-            padding: 20px;
-            display: flex;
-            justify-content: center;
-        }
+    padding: 0;
+    display: flex;
+    justify-content: center;
+}
 
         .invoice-container {
             width: 100%;
