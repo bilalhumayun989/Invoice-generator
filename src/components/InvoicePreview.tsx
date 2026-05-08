@@ -28,12 +28,9 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, onPrint })
 
 
   const totalAfterDiscountPKR = subtotalPKR - discountAmountPKR;
-
-  // Advance Payment
   const advanceAmount = parseAmount(data.advanceAmount || '0');
   const advanceAmountPKR = convertToPKR(advanceAmount, data.advanceCurrency);
 
-  // Milestones
   const activeMilestones = data.isMilestonePayment ? (data.milestones || []) : [];
   const milestonePayments = activeMilestones.map(m => ({
     ...m,
