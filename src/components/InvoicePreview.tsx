@@ -269,6 +269,7 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, onPrint })
                 <section class="billing-section">
                     <div class="section-title">Payment Schedule</div>
                     <div class="schedule-card">
+                        ${advanceAmountPKR > 0 ? `
                         <div class="milestone-row">
                             <div class="m-info">
                                 <span class="m-title">Advance Payment</span>
@@ -277,6 +278,7 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, onPrint })
                             </div>
                             <div class="m-amount">PKR ${formatAmount(advanceAmountPKR)}</div>
                         </div>
+                        ` : ''}
                         ${milestonePayments.map(m => {
       const isOverdue = m.status === 'Pending' && m.dueDate && new Date(m.dueDate) < new Date();
       return `
@@ -411,23 +413,25 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, onPrint })
             </div>
 
             <div className="grid gap-4">
-              <div className={`flex items-center justify-between p-4 rounded-xl border transition-all ${data.advanceStatus === 'Paid' ? 'bg-green-50/30 border-green-100' : 'bg-white border-slate-200 shadow-sm'}`}>
-                <div className="flex items-center gap-4">
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center ${data.advanceStatus === 'Paid' ? 'bg-green-100 text-green-600' : 'bg-slate-100 text-slate-400'}`}>
-                    {data.advanceStatus === 'Paid' ? '✓' : '●'}
+              {advanceAmountPKR > 0 && (
+                <div className={`flex items-center justify-between p-4 rounded-xl border transition-all ${data.advanceStatus === 'Paid' ? 'bg-green-50/30 border-green-100' : 'bg-white border-slate-200 shadow-sm'}`}>
+                  <div className="flex items-center gap-4">
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${data.advanceStatus === 'Paid' ? 'bg-green-100 text-green-600' : 'bg-slate-100 text-slate-400'}`}>
+                      {data.advanceStatus === 'Paid' ? '✓' : '●'}
+                    </div>
+                    <div>
+                      <p className="font-bold text-slate-900">Advance Payment</p>
+                      <p className="text-xs text-slate-500 font-medium">Date: {data.advanceDate || 'Immediate'}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-bold text-slate-900">Advance Payment</p>
-                    <p className="text-xs text-slate-500 font-medium">Date: {data.advanceDate || 'Immediate'}</p>
+                  <div className="text-right">
+                    <p className="font-bold text-slate-950">PKR {formatAmount(advanceAmountPKR)}</p>
+                    <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded ${data.advanceStatus === 'Paid' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
+                      {data.advanceStatus}
+                    </span>
                   </div>
                 </div>
-                <div className="text-right">
-                  <p className="font-bold text-slate-950">PKR {formatAmount(advanceAmountPKR)}</p>
-                  <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded ${data.advanceStatus === 'Paid' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
-                    {data.advanceStatus}
-                  </span>
-                </div>
-              </div>
+              )}
 
               {milestonePayments.map((milestone) => {
                 const isOverdue = milestone.status === 'Pending' && milestone.dueDate && new Date(milestone.dueDate) < new Date();
