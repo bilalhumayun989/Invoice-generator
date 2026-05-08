@@ -195,11 +195,15 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, onPrint })
                 <div class="company-info">
                     <div class="label">From</div>
                     <h1 class="company-name">${data.companyName}</h1>
-                    <div class="company-details">${data.companyAddress.replace(/\n/g, '<br/>')}<br/>${data.companyEmail} &nbsp;|&nbsp; ${data.companyPhone}</div>
+                    <div class="company-details">
+                        ${data.companyAddress.replace(/\n/g, '<br/>')}
+                        ${(data.companyEmail || data.companyPhone) ? `<br/>${data.companyEmail}${data.companyEmail && data.companyPhone ? ' &nbsp;|&nbsp; ' : ''}${data.companyPhone}` : ''}
+                    </div>
                 </div>
                 <div class="invoice-meta">
                     <div class="invoice-label">Invoice</div>
                     <div class="invoice-number">${data.invoiceNumber}</div>
+                    <div class="invoice-label" style="margin-top: 10px; font-size: 9px;">Issued: ${data.issueDate}</div>
                 </div>
             </header>
 
@@ -208,64 +212,76 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, onPrint })
                     <div class="info-card">
                         <h3>Bill To</h3>
                         <div class="name">${data.clientName}</div>
-                        <div class="details">${data.clientAddress.replace(/\n/g, '<br/>')}<br/>${data.clientEmail}<br/>${data.clientPhone}</div>
+                        <div class="details">
+                            ${data.clientAddress.replace(/\n/g, '<br/>')}
+                            ${data.clientEmail ? `<br/>${data.clientEmail}` : ''}
+                            ${data.clientPhone ? `<br/>${data.clientPhone}` : ''}
+                        </div>
                     </div>
+                    ${(data.bankName || data.accountTitle || data.accountNumber) ? `
                     <div class="info-card">
-    <h3>Banking Details</h3>
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 12px;">
-        <div>
-            <div style="font-size: 9px; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Bank</div>
-            <div style="font-weight: 600; color: var(--primary);">${data.bankName || '—'}</div>
-        </div>
-        <div>
-            <div style="font-size: 9px; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Title</div>
-            <div style="font-weight: 600; color: var(--primary);">${data.accountTitle || '—'}</div>
-        </div>
-        <div style="grid-column: span 2;">
-            <div style="font-size: 9px; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Account / IBAN</div>
-            <div style="font-weight: 700; font-family: monospace; background: #f8fafc; border: 1px solid var(--border); border-radius: 6px; padding: 6px 8px; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.05em;">${data.accountNumber || '—'}</div>
-        </div>
-    </div>
-</div>
+                        <h3>Banking Details</h3>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 12px;">
+                            ${data.bankName ? `
+                            <div>
+                                <div style="font-size: 9px; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Bank</div>
+                                <div style="font-weight: 600; color: var(--primary);">${data.bankName}</div>
+                            </div>
+                            ` : ''}
+                            ${data.accountTitle ? `
+                            <div>
+                                <div style="font-size: 9px; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Title</div>
+                                <div style="font-weight: 600; color: var(--primary);">${data.accountTitle}</div>
+                            </div>
+                            ` : ''}
+                            ${data.accountNumber ? `
+                            <div style="grid-column: span 2;">
+                                <div style="font-size: 9px; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Account / IBAN</div>
+                                <div style="font-weight: 700; font-family: monospace; background: #f8fafc; border: 1px solid var(--border); border-radius: 6px; padding: 6px 8px; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.05em;">${data.accountNumber}</div>
+                            </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                    ` : ''}
                 </div>
 
+                ${(data.items.length > 0 || monthlyPKR > 0) ? `
                 <section class="billing-section">
                     <div class="section-title">Project Scope</div>
-                    ${data.items.length > 0 ? `
-                        <div class="billing-item">
-                            <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
-                                <thead>
-                                    <tr style="border-bottom: 1px solid var(--border); text-align: left; color: var(--text-muted);">
-                                        <th style="padding: 8px 0;">Description</th>
-                                        <th style="padding: 8px 0; text-align: center;">Qty</th>
-                                        <th style="padding: 8px 0; text-align: right;">Price</th>
-                                        <th style="padding: 8px 0; text-align: right;">Total</th>
+                    <div class="billing-item">
+                        <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
+                            <thead>
+                                <tr style="border-bottom: 1px solid var(--border); text-align: left; color: var(--text-muted);">
+                                    <th style="padding: 8px 0;">Description</th>
+                                    <th style="padding: 8px 0; text-align: center;">Qty</th>
+                                    <th style="padding: 8px 0; text-align: right;">Price</th>
+                                    <th style="padding: 8px 0; text-align: right;">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${data.items.map(item => `
+                                    <tr style="border-bottom: 1px dashed var(--border);">
+                                        <td style="padding: 10px 0;">${item.description}</td>
+                                        <td style="padding: 10px 0; text-align: center;">${item.quantity}</td>
+                                        <td style="padding: 10px 0; text-align: right;">${item.currency === 'USD' ? '$' : 'PKR '}${formatAmount(item.unitPrice)}</td>
+                                        <td style="padding: 10px 0; text-align: right; font-weight: 600;">PKR ${formatAmount(convertToPKR(item.unitPrice * item.quantity, item.currency))}</td>
                                     </tr>
-                                </thead>
-                                <tbody>
-                                    ${data.items.map(item => `
-                                        <tr style="border-bottom: 1px dashed var(--border);">
-                                            <td style="padding: 10px 0;">${item.description}</td>
-                                            <td style="padding: 10px 0; text-align: center;">${item.quantity}</td>
-                                            <td style="padding: 10px 0; text-align: right;">${item.currency === 'USD' ? '$' : 'PKR '}${formatAmount(item.unitPrice)}</td>
-                                            <td style="padding: 10px 0; text-align: right; font-weight: 600;">PKR ${formatAmount(convertToPKR(item.unitPrice * item.quantity, item.currency))}</td>
-                                        </tr>
-                                    `).join('')}
-                                    ${monthlyPKR > 0 ? `
-                                        <tr style="border-bottom: 1px dashed var(--border);">
-                                            <td style="padding: 10px 0;">Monthly Retainer Fee</td>
-                                            <td style="padding: 10px 0; text-align: center;">1</td>
-                                            <td style="padding: 10px 0; text-align: right;">${data.monthlyCurrency === 'USD' ? '$' : 'PKR '}${formatAmount(monthlyValue)}</td>
-                                            <td style="padding: 10px 0; text-align: right; font-weight: 600;">PKR ${formatAmount(monthlyPKR)}</td>
-                                        </tr>
-                                    ` : ''}
-                                </tbody>
-                            </table>
-                        </div>
-                    ` : ''}
+                                `).join('')}
+                                ${monthlyPKR > 0 ? `
+                                    <tr style="border-bottom: 1px dashed var(--border);">
+                                        <td style="padding: 10px 0;">Monthly Retainer Fee</td>
+                                        <td style="padding: 10px 0; text-align: center;">1</td>
+                                        <td style="padding: 10px 0; text-align: right;">${data.monthlyCurrency === 'USD' ? '$' : 'PKR '}${formatAmount(monthlyValue)}</td>
+                                        <td style="padding: 10px 0; text-align: right; font-weight: 600;">PKR ${formatAmount(monthlyPKR)}</td>
+                                    </tr>
+                                ` : ''}
+                            </tbody>
+                        </table>
+                    </div>
                 </section>
+                ` : ''}
 
-                ${data.isMilestonePayment ? `
+                ${(data.isMilestonePayment || advanceAmountPKR > 0) ? `
                 <section class="billing-section">
                     <div class="section-title">Payment Schedule</div>
                     <div class="schedule-card">
@@ -279,7 +295,7 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, onPrint })
                             <div class="m-amount">PKR ${formatAmount(advanceAmountPKR)}</div>
                         </div>
                         ` : ''}
-                        ${milestonePayments.map(m => {
+                        ${data.isMilestonePayment ? milestonePayments.map(m => {
       const isOverdue = m.status === 'Pending' && m.dueDate && new Date(m.dueDate) < new Date();
       return `
                                 <div class="milestone-row">
@@ -291,7 +307,7 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, onPrint })
                                     <div class="m-amount">PKR ${formatAmount(m.amountPKR)}</div>
                                 </div>
                             `;
-    }).join('')}
+    }).join('') : ''}
                     </div>
                 </section>
                 ` : ''}
@@ -360,8 +376,8 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, onPrint })
             <h2 className="text-3xl font-extrabold text-slate-950 tracking-tight">{data.companyName}</h2>
             <div className="space-y-1 text-sm text-slate-600 leading-relaxed">
               <p className="whitespace-pre-line">{data.companyAddress}</p>
-              <p className="font-medium text-slate-900">{data.companyEmail}</p>
-              <p>{data.companyPhone}</p>
+              {data.companyEmail && <p className="font-medium text-slate-900">{data.companyEmail}</p>}
+              {data.companyPhone && <p>{data.companyPhone}</p>}
             </div>
           </div>
 
@@ -381,28 +397,36 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, onPrint })
             <h3 className="text-xl font-bold text-slate-900">{data.clientName}</h3>
             <div className="mt-3 space-y-1 text-sm text-slate-600">
               <p className="whitespace-pre-line">{data.clientAddress}</p>
-              <p className="mt-2 text-slate-900 font-medium">{data.clientEmail}</p>
-              <p>{data.clientPhone}</p>
+              {data.clientEmail && <p className="mt-2 text-slate-900 font-medium">{data.clientEmail}</p>}
+              {data.clientPhone && <p>{data.clientPhone}</p>}
             </div>
           </div>
 
-          <div className="p-6 rounded-2xl border border-slate-200 bg-slate-50/50">
-            <p className="text-[10px] uppercase tracking-[0.4em] text-slate-400 font-bold mb-4">Banking Details</p>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <p className="text-[10px] uppercase text-slate-400 font-bold">Bank</p>
-                <p className="text-sm font-semibold text-slate-800">{data.bankName || '—'}</p>
-              </div>
-              <div>
-                <p className="text-[10px] uppercase text-slate-400 font-bold">Title</p>
-                <p className="text-sm font-semibold text-slate-800">{data.accountTitle || '—'}</p>
-              </div>
-              <div className="col-span-2">
-                <p className="text-[10px] uppercase text-slate-400 font-bold">Account / IBAN</p>
-                <p className="text-sm font-bold text-slate-900 tracking-wider font-mono bg-white p-2 rounded border border-slate-100 mt-1 uppercase">{data.accountNumber || '—'}</p>
+          {(data.bankName || data.accountTitle || data.accountNumber) && (
+            <div className="p-6 rounded-2xl border border-slate-200 bg-slate-50/50">
+              <p className="text-[10px] uppercase tracking-[0.4em] text-slate-400 font-bold mb-4">Banking Details</p>
+              <div className="grid grid-cols-2 gap-4">
+                {data.bankName && (
+                  <div>
+                    <p className="text-[10px] uppercase text-slate-400 font-bold">Bank</p>
+                    <p className="text-sm font-semibold text-slate-800">{data.bankName}</p>
+                  </div>
+                )}
+                {data.accountTitle && (
+                  <div>
+                    <p className="text-[10px] uppercase text-slate-400 font-bold">Title</p>
+                    <p className="text-sm font-semibold text-slate-800">{data.accountTitle}</p>
+                  </div>
+                )}
+                {data.accountNumber && (
+                  <div className="col-span-2">
+                    <p className="text-[10px] uppercase text-slate-400 font-bold">Account / IBAN</p>
+                    <p className="text-sm font-bold text-slate-900 tracking-wider font-mono bg-white p-2 rounded border border-slate-100 mt-1 uppercase">{data.accountNumber}</p>
+                  </div>
+                )}
               </div>
             </div>
-          </div>
+          )}
         </div>
 
         {data.isMilestonePayment ? (
