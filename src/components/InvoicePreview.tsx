@@ -18,6 +18,7 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, onPrint })
   const monthlyCurrency = data.monthlyCurrency || 'PKR';
   const monthlyPKR = convertToPKR(monthlyValue, monthlyCurrency as 'USD' | 'PKR');
   const totalPKR = oneTimePKR + monthlyPKR;
+  const subtotalPKR = totalPKR;
   const discountCurrency = data.discountCurrency === 'USD' ? 'USD' : 'PKR';
   const discountAmount = parseAmount(data.discountAmount || '0');
 
@@ -26,7 +27,7 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, onPrint })
     : Math.max(0, discountAmount);
 
 
-  const totalAfterDiscountPKR = totalPKR - discountAmountPKR;
+  const totalAfterDiscountPKR = subtotalPKR - discountAmountPKR;
 
   // Advance Payment
   const advanceAmount = parseAmount(data.advanceAmount || '0');
@@ -43,10 +44,7 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, onPrint })
     milestonePayments.filter(m => m.status === 'Paid').reduce((acc, m) => acc + m.amountPKR, 0);
 
   // Outstanding Balance calculation
-  const remainingBalancePKR = data.isMilestonePayment
-    ? (data.advanceStatus === 'Pending' ? advanceAmountPKR : 0) +
-    milestonePayments.filter(m => m.status === 'Pending').reduce((acc, m) => acc + m.amountPKR, 0)
-    : totalAfterDiscountPKR - (data.advanceStatus === 'Paid' ? advanceAmountPKR : 0);
+  const remainingBalancePKR = totalAfterDiscountPKR - totalPaidPKR;
 
   const handlePrint = () => {
     const html = `<!DOCTYPE html>
@@ -256,6 +254,14 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, onPrint })
                                             <td style="padding: 10px 0; text-align: right; font-weight: 600;">PKR ${formatAmount(convertToPKR(item.unitPrice * item.quantity, item.currency))}</td>
                                         </tr>
                                     `).join('')}
+                                    ${monthlyPKR > 0 ? `
+                                        <tr style="border-bottom: 1px dashed var(--border);">
+                                            <td style="padding: 10px 0;">Monthly Retainer Fee</td>
+                                            <td style="padding: 10px 0; text-align: center;">1</td>
+                                            <td style="padding: 10px 0; text-align: right;">${data.monthlyCurrency === 'USD' ? '$' : 'PKR '}${formatAmount(monthlyValue)}</td>
+                                            <td style="padding: 10px 0; text-align: right; font-weight: 600;">PKR ${formatAmount(monthlyPKR)}</td>
+                                        </tr>
+                                    ` : ''}
                                 </tbody>
                             </table>
                         </div>
@@ -293,8 +299,18 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, onPrint })
 
                 <div class="total-container">
                     <div class="total-row">
-                        <span class="label">Subtotal</span>
-                        <span class="val">PKR ${formatAmount(totalAfterDiscountPKR)}</span>
+                        <span class="label">Gross Subtotal</span>
+                        <span class="val">PKR ${formatAmount(subtotalPKR)}</span>
+                    </div>
+                    ${discountAmountPKR > 0 ? `
+                    <div class="total-row" style="color: #ef4444;">
+                        <span class="label" style="color: #ef4444;">Discount</span>
+                        <span class="val">- PKR ${formatAmount(discountAmountPKR)}</span>
+                    </div>
+                    ` : ''}
+                    <div class="total-row" style="border-top: 1px solid var(--border); padding-top: 8px; margin-top: 4px;">
+                        <span class="label" style="font-weight: 700; color: var(--primary);">Net Total</span>
+                        <span class="val" style="font-weight: 800; color: var(--primary);">PKR ${formatAmount(totalAfterDiscountPKR)}</span>
                     </div>
                     <div class="total-row">
                         <span class="label">Total Paid to Date</span>
@@ -457,17 +473,21 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, onPrint })
         <div className="mt-12 p-8 rounded-[32px] bg-slate-900 text-white relative overflow-hidden">
           <div className="absolute -top-24 -right-24 w-64 h-64 bg-blue-500/20 rounded-full blur-[80px]"></div>
 
-          <div className="grid gap-6 sm:grid-cols-3 relative z-10">
+          <div className="grid gap-6 sm:grid-cols-4 relative z-10">
             <div className="space-y-1">
-              <p className="text-[10px] uppercase tracking-widest text-slate-400 font-bold">Gross Total</p>
-              <p className="text-2xl font-bold">PKR {formatAmount(totalAfterDiscountPKR)}</p>
+              <p className="text-[10px] uppercase tracking-widest text-slate-400 font-bold">Subtotal</p>
+              <p className="text-xl font-bold">PKR {formatAmount(subtotalPKR)}</p>
             </div>
             <div className="space-y-1">
-              <p className="text-[10px] uppercase tracking-widest text-green-400 font-bold">Paid to Date</p>
-              <p className="text-2xl font-bold text-green-400">PKR {formatAmount(totalPaidPKR)}</p>
+              <p className="text-[10px] uppercase tracking-widest text-red-400 font-bold">Discount</p>
+              <p className="text-xl font-bold text-red-400">- PKR {formatAmount(discountAmountPKR)}</p>
+            </div>
+            <div className="space-y-1">
+              <p className="text-[10px] uppercase tracking-widest text-green-400 font-bold">Paid</p>
+              <p className="text-xl font-bold text-green-400">PKR {formatAmount(totalPaidPKR)}</p>
             </div>
             <div className="space-y-1 sm:text-right">
-              <p className="text-[10px] uppercase tracking-widest text-blue-300 font-bold">Outstanding Balance</p>
+              <p className="text-[10px] uppercase tracking-widest text-blue-300 font-bold">Balance Due</p>
               <p className="text-4xl font-black text-white">PKR {formatAmount(remainingBalancePKR)}</p>
             </div>
           </div>
