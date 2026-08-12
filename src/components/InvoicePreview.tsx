@@ -329,7 +329,7 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, onPrint })
                     </div>
                     <div class="total-row">
                         <span class="label">Total Paid to Date</span>
-                        <span class="val" style="color: var(--success);">PKR ${formatAmount(totalPaidPKR)}</span>
+                        <span class="val" style="color: var(--success);">PKR ${formatAmount(data.issueDate ? totalAfterDiscountPKR : totalPaidPKR)}</span>
                     </div>
                     <div class="total-row balance">
                         <span class="label">Outstanding Balance</span>
@@ -519,7 +519,7 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, onPrint })
             </div>
             <div className="space-y-1">
               <p className="text-[10px] uppercase tracking-widest text-green-400 font-bold">Paid</p>
-              <p className="text-xl font-bold text-green-400">PKR {formatAmount(totalPaidPKR)}</p>
+              <p className="text-xl font-bold text-green-400">PKR {formatAmount(data.issueDate ? totalAfterDiscountPKR : totalPaidPKR)}</p>
             </div>
             <div className="space-y-1 sm:text-right">
               <p className="text-[10px] uppercase tracking-widest text-blue-300 font-bold">Balance Due</p>
