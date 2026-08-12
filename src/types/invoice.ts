@@ -69,7 +69,7 @@ export const defaultInvoiceData: InvoiceData = {
   oneTimeCurrency: 'USD',
   monthlyCurrency: 'PKR',
   billingType: 'monthly-retainer',
-  monthlyAmount: '10',
+  monthlyAmount: '0',
   billingMonth: 'January 2026',
   monthlyDescription: 'Design Strategy & Editorial Direction Retainer',
   discountCurrency: 'PKR',

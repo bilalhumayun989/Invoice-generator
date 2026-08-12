@@ -49,10 +49,9 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, onPrint })
 <head>
     <meta charset="utf-8"/>
     <title>Invoice ${data.invoiceNumber}</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
         :root {
             --primary: #0f172a;
             --accent: #38bdf8;
@@ -66,7 +65,7 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, onPrint })
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { 
-            font-family: 'Montserrat', sans-serif; 
+            font-family: 'Inter', 'Segoe UI', Arial, sans-serif; 
             background: #f1f5f9; 
             color: var(--text-main);
             line-height: 1.5;
@@ -183,6 +182,7 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, onPrint })
         @media print {
             body { background: #fff; }
             .invoice-container { box-shadow: none; border-radius: 0; max-width: 100%; }
+            .print-hide { display: none !important; }
             @page { size: A4; margin: 0; }
         }
     </style>
@@ -344,12 +344,22 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, onPrint })
         </div>
     </div>
 
-    <script>
-        window.onload = function() {
-            setTimeout(() => window.print(), 500);
-            window.onafterprint = () => window.close();
-        };
-    </script>
+    <!-- Print Control Bar -->
+    <div class="print-hide" style="position: fixed; top: 0; left: 0; right: 0; background: #0f172a; padding: 16px 32px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 100;">
+        <div style="color: white; font-family: system-ui, sans-serif; font-weight: 600;">Invoice Preview</div>
+        <button onclick="window.print()" style="background: white; color: #0f172a; border: none; padding: 10px 24px; border-radius: 8px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 8px; font-family: system-ui, sans-serif;">
+            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+            Print / Save as PDF
+        </button>
+    </div>
+    <!-- Add padding to top to avoid overlap with the fixed bar -->
+    <style>
+        @media screen {
+            .page-wrapper {
+                margin-top: 80px !important;
+            }
+        }
+    </style>
 </body>
 </html>`;
 

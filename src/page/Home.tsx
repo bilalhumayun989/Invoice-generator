@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { defaultInvoiceData, type InvoiceData } from '../types/invoice';
 import { InvoiceForm } from '../components/InvoiceForm';
 import { InvoicePreview } from '../components/InvoicePreview';
+import { DropZone } from '../components/DropZone';
 
 export const Home: React.FC = () => {
   const [data, setData] = useState<InvoiceData>(defaultInvoiceData);
@@ -51,6 +52,14 @@ export const Home: React.FC = () => {
               <p className="text-sm text-slate-500">Enter your invoice details here.</p>
             </div>
           </div>
+          
+          <DropZone onDataExtracted={(extractedData) => {
+            setData(prev => ({
+              ...prev,
+              ...extractedData
+            }));
+          }} />
+
           <InvoiceForm data={data} onChange={setData} />
         </section>
 
