@@ -170,6 +170,15 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({ data, onChange }) => {
               placeholder="INV-2024-001"
             />
           </div>
+          <div>
+            <label className={LABEL}>Paid On Date</label>
+            <input
+              className={INPUT}
+              type="date"
+              value={data.issueDate}
+              onChange={e => set('issueDate', e.target.value)}
+            />
+          </div>
         </div>
       </SectionCard>
 

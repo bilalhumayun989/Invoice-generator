@@ -203,7 +203,7 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, onPrint })
                 <div class="invoice-meta">
                     <div class="invoice-label">Invoice</div>
                     <div class="invoice-number">${data.invoiceNumber}</div>
-                    <div class="invoice-label" style="margin-top: 10px; font-size: 9px;">Issued: ${data.issueDate}</div>
+                    <div class="invoice-label" style="margin-top: 10px; font-size: 9px;">Paid On: ${data.issueDate}</div>
                 </div>
             </header>
 
@@ -395,7 +395,7 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, onPrint })
             <p className="text-[10px] uppercase tracking-[0.4em] text-slate-400 font-bold">Invoice Reference</p>
             <p className="text-4xl font-black text-slate-950 mt-2">{data.invoiceNumber}</p>
             <div className="mt-4 pt-4 border-t border-slate-200 flex justify-between items-center">
-              <span className="text-xs text-slate-500 uppercase tracking-widest font-bold">Issued</span>
+              <span className="text-xs text-slate-500 uppercase tracking-widest font-bold">Paid On</span>
               <span className="text-sm font-semibold text-slate-900">{data.issueDate}</span>
             </div>
           </div>

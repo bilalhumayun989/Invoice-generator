@@ -58,7 +58,7 @@ export const defaultInvoiceData: InvoiceData = {
   companyName: 'BROSHTECH ',
   companyAddress: '113 Mall of, Zia Colony Nasar Ullah Khan Town, Faisalabad',
   companyEmail: 'info@broshtech.com',
-  companyPhone: '+1 (555) 000-0000',
+  companyPhone: '+92 317 7676560',
   clientName: 'Modernist Architectures Inc.',
   clientEmail: 'contact@modernist.arch',
   clientPhone: '+44 20 7946 0000',
