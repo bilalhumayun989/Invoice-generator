@@ -40,8 +40,8 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, onPrint })
   const totalPaidPKR = (data.advanceStatus === 'Paid' ? advanceAmountPKR : 0) +
     milestonePayments.filter(m => m.status === 'Paid').reduce((acc, m) => acc + m.amountPKR, 0);
 
-  // Outstanding Balance calculation
-  const remainingBalancePKR = totalAfterDiscountPKR - totalPaidPKR;
+  // Outstanding Balance calculation — if Paid On date is set, balance is 0
+  const remainingBalancePKR = data.issueDate ? 0 : totalAfterDiscountPKR - totalPaidPKR;
 
   const handlePrint = () => {
     const html = `<!DOCTYPE html>
@@ -333,7 +333,7 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, onPrint })
                     </div>
                     <div class="total-row balance">
                         <span class="label">Outstanding Balance</span>
-                        <span class="val">PKR ${formatAmount(remainingBalancePKR)}</span>
+                        <span class="val">PKR ${formatAmount(data.issueDate ? 0 : remainingBalancePKR)}</span>
                     </div>
                 </div>
             </div>
