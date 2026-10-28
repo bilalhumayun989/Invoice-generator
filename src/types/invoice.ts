@@ -18,6 +18,7 @@ export interface Milestone {
 
 export interface InvoiceData {
   invoiceNumber: string;
+  status: 'Unpaid' | 'Paid';
   issueDate: string;
   dueDate: string;
   companyName: string;
@@ -28,6 +29,7 @@ export interface InvoiceData {
   clientEmail: string;
   clientPhone: string;
   clientAddress: string;
+  projectDomain: string;
   bankName: string;
   accountTitle: string;
   accountNumber: string;
@@ -53,6 +55,7 @@ export interface InvoiceData {
 
 export const defaultInvoiceData: InvoiceData = {
   invoiceNumber: 'INV-2026-001',
+  status: 'Unpaid',
   issueDate: new Date().toISOString().split('T')[0],
   dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
   companyName: 'BROSHTECH ',
@@ -63,6 +66,7 @@ export const defaultInvoiceData: InvoiceData = {
   clientEmail: 'contact@modernist.arch',
   clientPhone: '+44 20 7946 0000',
   clientAddress: 'The Glass Tower, 5th Floor, London SE1 9SG',
+  projectDomain: '',
   bankName: 'International Commerce Bank',
   accountTitle: 'Editorial Precision Systems',
   accountNumber: 'GB12 ICBK 6016 1331 9283 74',

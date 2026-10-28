@@ -40,8 +40,10 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, onPrint })
   const totalPaidPKR = (data.advanceStatus === 'Paid' ? advanceAmountPKR : 0) +
     milestonePayments.filter(m => m.status === 'Paid').reduce((acc, m) => acc + m.amountPKR, 0);
 
-  // Outstanding Balance calculation — if Paid On date is set, balance is 0
-  const remainingBalancePKR = data.issueDate ? 0 : totalAfterDiscountPKR - totalPaidPKR;
+  const remainingBalancePKR = data.status === 'Paid'
+    ? 0
+    : Math.max(0, totalAfterDiscountPKR - totalPaidPKR);
+  const paidToDatePKR = data.status === 'Paid' ? totalAfterDiscountPKR : totalPaidPKR;
 
   const handlePrint = () => {
     const html = `<!DOCTYPE html>
@@ -203,7 +205,9 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, onPrint })
                 <div class="invoice-meta">
                     <div class="invoice-label">Invoice</div>
                     <div class="invoice-number">${data.invoiceNumber}</div>
-                    <div class="invoice-label" style="margin-top: 10px; font-size: 9px;">Paid On: ${data.issueDate}</div>
+                    <div class="invoice-label" style="margin-top: 10px; font-size: 9px;">Status: ${data.status}</div>
+                    <div class="invoice-label" style="margin-top: 10px; font-size: 9px;">Issue Date: ${data.issueDate}</div>
+                    <div class="invoice-label" style="margin-top: 4px; font-size: 9px;">Due Date: ${data.dueDate}</div>
                 </div>
             </header>
 
@@ -216,6 +220,7 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, onPrint })
                             ${data.clientAddress.replace(/\n/g, '<br/>')}
                             ${data.clientEmail ? `<br/>${data.clientEmail}` : ''}
                             ${data.clientPhone ? `<br/>${data.clientPhone}` : ''}
+                            ${data.projectDomain ? `<br/><strong>Project domain:</strong> ${data.projectDomain}` : ''}
                         </div>
                     </div>
                     ${(data.bankName || data.accountTitle || data.accountNumber) ? `
@@ -329,11 +334,11 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, onPrint })
                     </div>
                     <div class="total-row">
                         <span class="label">Total Paid to Date</span>
-                        <span class="val" style="color: var(--success);">PKR ${formatAmount(data.issueDate ? totalAfterDiscountPKR : totalPaidPKR)}</span>
+                        <span class="val" style="color: var(--success);">PKR ${formatAmount(paidToDatePKR)}</span>
                     </div>
                     <div class="total-row balance">
                         <span class="label">Outstanding Balance</span>
-                        <span class="val">PKR ${formatAmount(data.issueDate ? 0 : remainingBalancePKR)}</span>
+                        <span class="val">PKR ${formatAmount(remainingBalancePKR)}</span>
                     </div>
                 </div>
             </div>
@@ -395,8 +400,18 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, onPrint })
             <p className="text-[10px] uppercase tracking-[0.4em] text-slate-400 font-bold">Invoice Reference</p>
             <p className="text-4xl font-black text-slate-950 mt-2">{data.invoiceNumber}</p>
             <div className="mt-4 pt-4 border-t border-slate-200 flex justify-between items-center">
-              <span className="text-xs text-slate-500 uppercase tracking-widest font-bold">Paid On</span>
+              <span className="text-xs text-slate-500 uppercase tracking-widest font-bold">Issue Date</span>
               <span className="text-sm font-semibold text-slate-900">{data.issueDate}</span>
+            </div>
+            <div className="mt-4 flex justify-between items-center">
+              <span className="text-xs text-slate-500 uppercase tracking-widest font-bold">Due Date</span>
+              <span className="text-sm font-semibold text-slate-900">{data.dueDate}</span>
+            </div>
+            <div className="mt-4 flex justify-between items-center">
+              <span className="text-xs text-slate-500 uppercase tracking-widest font-bold">Status</span>
+              <span className={`rounded-full px-3 py-1 text-xs font-bold ${data.status === 'Paid' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
+                {data.status}
+              </span>
             </div>
           </div>
         </div>
@@ -409,6 +424,7 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, onPrint })
               <p className="whitespace-pre-line">{data.clientAddress}</p>
               {data.clientEmail && <p className="mt-2 text-slate-900 font-medium">{data.clientEmail}</p>}
               {data.clientPhone && <p>{data.clientPhone}</p>}
+              {data.projectDomain && <p><span className="font-semibold">Project domain:</span> {data.projectDomain}</p>}
             </div>
           </div>
 
@@ -519,7 +535,7 @@ export const InvoicePreview: React.FC<InvoicePreviewProps> = ({ data, onPrint })
             </div>
             <div className="space-y-1">
               <p className="text-[10px] uppercase tracking-widest text-green-400 font-bold">Paid</p>
-              <p className="text-xl font-bold text-green-400">PKR {formatAmount(data.issueDate ? totalAfterDiscountPKR : totalPaidPKR)}</p>
+              <p className="text-xl font-bold text-green-400">PKR {formatAmount(paidToDatePKR)}</p>
             </div>
             <div className="space-y-1 sm:text-right">
               <p className="text-[10px] uppercase tracking-widest text-blue-300 font-bold">Balance Due</p>

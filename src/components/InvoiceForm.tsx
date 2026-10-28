@@ -4,6 +4,12 @@ import type { InvoiceData, InvoiceItem, Milestone } from '../types/invoice';
 interface InvoiceFormProps {
   data: InvoiceData;
   onChange: (data: InvoiceData) => void;
+  clients?: Array<{ id: string; name: string; email: string; phone: string }>;
+  onClientSelect?: (id: string) => void;
+  domains?: Array<{ id: string; clientId: string; value: string }>;
+  selectedClientId?: string;
+  onDomainSelect?: (value: string) => void;
+  onAddDomain?: (value: string) => void;
 }
 
 const INPUT =
@@ -12,16 +18,17 @@ const INPUT =
 const LABEL = 'block text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-600 mb-2';
 
 const SectionCard: React.FC<{ title: string; description: string; children: React.ReactNode }> = ({ title, description, children }) => (
-  <div className="rounded-[18px] border border-slate-200 bg-slate-50 p-4 sm:p-6">
-    <div className="mb-6">
-      <p className="text-[10px] sm:text-xs uppercase tracking-[0.35em] text-slate-500">{title}</p>
-      <p className="mt-2 text-xs sm:text-sm text-slate-600">{description}</p>
-    </div>
-    <div className="space-y-6">{children}</div>
-  </div>
+  <details className="group rounded-[18px] border border-slate-200 bg-slate-50 p-4 sm:p-5">
+    <summary className="flex cursor-pointer list-none items-center justify-between gap-4 [&::-webkit-details-marker]:hidden">
+      <div><p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-700">{title}</p><p className="mt-1 text-xs text-slate-500">{description}</p></div>
+      <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-white text-lg text-slate-500 shadow-sm transition group-open:rotate-45">+</span>
+    </summary>
+    <div className="mt-5 space-y-5 border-t border-slate-200 pt-5">{children}</div>
+  </details>
 );
 
-export const InvoiceForm: React.FC<InvoiceFormProps> = ({ data, onChange }) => {
+export const InvoiceForm: React.FC<InvoiceFormProps> = ({ data, onChange, clients = [], onClientSelect, domains = [], selectedClientId, onDomainSelect, onAddDomain }) => {
+  const [newDomain, setNewDomain] = React.useState('');
   const set = (field: keyof InvoiceData, value: any) => onChange({ ...data, [field]: value } as InvoiceData);
 
   const updateItem = (id: string, field: keyof InvoiceItem, value: any) => {
@@ -72,7 +79,7 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({ data, onChange }) => {
 
 
   return (
-    <div className="space-y-6 sm:space-y-10">
+    <div className="space-y-3">
       <SectionCard title="Company Details" description="Add your business contact information.">
         <div>
           <label className={LABEL}>Company Name</label>
@@ -116,51 +123,39 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({ data, onChange }) => {
         </div>
       </SectionCard>
 
-      <SectionCard title="Client Details" description="Add the recipient contact information.">
+      <SectionCard title="Project Domain" description="Optionally connect this invoice to a client website domain.">
         <div>
-          <label className={LABEL}>Client Name</label>
-          <input
-            className={INPUT}
-            value={data.clientName}
-            onChange={e => set('clientName', e.target.value)}
-            placeholder="Modernist Architectures Inc."
-          />
+          <label className={LABEL}>Domain (optional)</label>
+          <select className={INPUT} value={data.projectDomain} onChange={e => onDomainSelect?.(e.target.value)}>
+            <option value="">No domain</option>
+            {domains.filter(domain => domain.clientId === selectedClientId).map(domain => <option key={domain.id} value={domain.value}>{domain.value}</option>)}
+          </select>
         </div>
+        {selectedClientId && <div className="flex flex-col gap-2 sm:flex-row">
+          <input className={INPUT} value={newDomain} onChange={e=>setNewDomain(e.target.value)} placeholder="example.com" aria-label="Add a domain" />
+          <button type="button" onClick={()=>{const value=newDomain.trim();if(value){onAddDomain?.(value);setNewDomain('');}}} className="shrink-0 rounded-xl bg-slate-950 px-4 py-3 text-sm font-bold text-white">Add domain</button>
+        </div>}
+        {!selectedClientId && <p className="text-xs text-slate-500">Select a client first to choose or add their domain.</p>}
+      </SectionCard>
+
+      <SectionCard title="Client Details" description="Choose a saved client for this invoice.">
         <div>
-          <label className={LABEL}>Physical Address</label>
-          <textarea
-            className={`${INPUT} min-h-[96px] resize-none`}
-            value={data.clientAddress}
-            onChange={e => set('clientAddress', e.target.value)}
-            placeholder="The Glass Tower, 5th Floor, London SE1 9SG"
-          />
+          <label className={LABEL}>Select saved client</label>
+          <select className={INPUT} value={selectedClientId ?? ''} onChange={e => onClientSelect?.(e.target.value)}>
+            <option value="">Choose a client...</option>
+            {clients.map(client => <option key={client.id} value={client.id}>{client.name}</option>)}
+          </select>
+          {clients.length === 0 && <p className="mt-2 text-xs text-slate-500">Add a client from the Clients section to select them here.</p>}
         </div>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div>
-            <label className={LABEL}>Phone Number</label>
-            <input
-              className={INPUT}
-              type="tel"
-              value={data.clientPhone}
-              onChange={e => set('clientPhone', e.target.value)}
-              placeholder="+44 20 7946 0000"
-            />
-          </div>
-          <div>
-            <label className={LABEL}>Email Address</label>
-            <input
-              className={INPUT}
-              type="email"
-              value={data.clientEmail}
-              onChange={e => set('clientEmail', e.target.value)}
-              placeholder="contact@modernist.arch"
-            />
-          </div>
-        </div>
+        {data.clientName && <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600">
+          <span className="font-semibold text-slate-900">{data.clientName}</span>
+          {data.clientEmail && <span className="ml-3">{data.clientEmail}</span>}
+          {data.clientPhone && <span className="ml-3">{data.clientPhone}</span>}
+        </div>}
       </SectionCard>
 
       <SectionCard title="Invoice Info" description="Define the invoice number and dates.">
-        <div className="grid gap-4 sm:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <div>
             <label className={LABEL}>Invoice Number</label>
             <input
@@ -171,13 +166,29 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({ data, onChange }) => {
             />
           </div>
           <div>
-            <label className={LABEL}>Paid On Date</label>
+            <label className={LABEL}>Issue Date</label>
             <input
               className={INPUT}
               type="date"
               value={data.issueDate}
               onChange={e => set('issueDate', e.target.value)}
             />
+          </div>
+          <div>
+            <label className={LABEL}>Due Date</label>
+            <input
+              className={INPUT}
+              type="date"
+              value={data.dueDate}
+              onChange={e => set('dueDate', e.target.value)}
+            />
+          </div>
+          <div>
+            <label className={LABEL}>Payment Status</label>
+            <select className={INPUT} value={data.status} onChange={e => set('status', e.target.value)}>
+              <option value="Unpaid">Unpaid</option>
+              <option value="Paid">Paid</option>
+            </select>
           </div>
         </div>
       </SectionCard>
@@ -409,4 +420,3 @@ export const InvoiceForm: React.FC<InvoiceFormProps> = ({ data, onChange }) => {
     </div>
   );
 };
-
