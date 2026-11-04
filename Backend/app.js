@@ -126,10 +126,17 @@ async function handleDataRequest(req, res) {
   } catch (error) {
     console.error('Database API error:', error);
     let nested = error; let nestedCode;
-    while (nested && typeof nested === 'object') { if (typeof nested.code === 'string') nestedCode = nested.code; nested = nested.cause; }
     let message = 'Database unavailable. Check the MongoDB URI, Atlas network access, and database credentials.';
+    while (nested && typeof nested === 'object') {
+      if (typeof nested.code === 'string' || typeof nested.code === 'number') nestedCode = nested.code;
+      if (nested.code === 8000 || (nested.codeName === 'AtlasError' && /auth/i.test(String(nested.message || '')))) {
+        nestedCode = nested.code ?? nested.codeName;
+        message = 'MongoDB authentication failed. Check the Atlas database username, password, and authSource.';
+      }
+      nested = nested.cause;
+    }
     if (error instanceof Error && error.message.startsWith('Missing MongoDB connection string')) message = error.message;
-    else if (nestedCode?.startsWith('ERR_SSL_')) message = 'MongoDB TLS connection failed. Check network/firewall access to Atlas and the Atlas IP access list.';
+    else if (typeof nestedCode === 'string' && nestedCode.startsWith('ERR_SSL_')) message = 'MongoDB TLS connection failed. Check network/firewall access to Atlas and the Atlas IP access list.';
     else if (nestedCode === 'EACCES') message = 'Node.js was denied permission to open the MongoDB socket (EACCES).';
     else if (nestedCode === 'ECONNREFUSED') message = 'The MongoDB host refused the connection. Check outbound TCP access and confirm the cluster is running.';
     return res.status(500).json({ error: message, code: nestedCode || 'DATABASE_ERROR' });
