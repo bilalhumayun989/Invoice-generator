@@ -51,7 +51,7 @@ async function makeGeneratedInvoice(db, source, schedule, scheduledDate) {
   };
   const data = {
     ...sourceData,
-    invoiceNumber: await allocateInvoiceNumber(db, sourceData.clientName),
+    invoiceNumber: await allocateInvoiceNumber(db, sourceData.clientName, source.ownerId),
     status: 'Unpaid',
     issueDate,
     dueDate,
@@ -69,6 +69,7 @@ async function makeGeneratedInvoice(db, source, schedule, scheduledDate) {
 
   return {
     id: generatedId,
+    ownerId: source.ownerId,
     recurringSourceId: source.id,
     clientId: source.clientId,
     updatedAt: new Date().toISOString(),
@@ -82,7 +83,7 @@ export async function processDueRecurringInvoices(getDatabase, { now = new Date(
   await invoices.createIndex({ id: 1 }, { unique: true });
 
   const today = dateForTimezone(now, timezone);
-  const sources = await invoices.find({ recurringSourceId: { $exists: false } }).toArray();
+  const sources = await invoices.find({ recurringSourceId: { $exists: false }, ownerId: { $exists: true } }).toArray();
   let generatedCount = 0;
 
   for (const source of sources) {
@@ -99,7 +100,7 @@ export async function processDueRecurringInvoices(getDatabase, { now = new Date(
 
     for (const schedule of schedules) {
       const generated = await makeGeneratedInvoice(db, source, schedule, schedule.date);
-      await invoices.updateOne({ id: generated.id }, { $setOnInsert: generated }, { upsert: true });
+      await invoices.updateOne({ id: generated.id, ownerId: source.ownerId }, { $setOnInsert: generated }, { upsert: true });
       generatedCount += 1;
 
       const nextDate = nextDateAfterToday(schedule.date, today);
@@ -109,7 +110,7 @@ export async function processDueRecurringInvoices(getDatabase, { now = new Date(
 
     if (changed) {
       await invoices.updateOne(
-        { id: source.id, updatedAt: source.updatedAt },
+        { id: source.id, ownerId: source.ownerId, updatedAt: source.updatedAt },
         { $set: { data: updatedData, updatedAt: new Date().toISOString() } },
       );
     }

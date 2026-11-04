@@ -62,7 +62,7 @@ const createInvoiceCopy = (): InvoiceData => ({
   items: [], milestones: [],
 });
 
-export const Home: React.FC = () => {
+export const Home: React.FC<{ user: { email: string; name: string; picture: string }; onLogout: () => void }> = ({ user, onLogout }) => {
   const [data, setData] = useState<InvoiceData>(createInvoiceCopy);
   const [showPreview, setShowPreview] = useState(false);
   const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null);
@@ -438,6 +438,8 @@ export const Home: React.FC = () => {
             {page === 'dashboard' ? 'Dashboard' : page === 'receipts' ? 'Receipts' : page === 'new' ? (selectedInvoiceId ? 'Edit invoice' : 'New invoice') : page === 'clients' ? 'Clients' : page === 'domains' ? 'Domains' : page === 'recurring' ? 'Recurrings' : 'Invoices'}
           </span>
           <div className="flex items-center gap-2">
+            <span className="hidden max-w-48 truncate text-xs font-medium text-slate-500 sm:inline">{user.email}</span>
+            <button onClick={onLogout} className="rounded-full border border-slate-300 bg-white px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-100">Sign out</button>
             <select aria-label="Navigate" value={page} onChange={e=>{const nextPage=e.target.value as typeof page;setPage(nextPage);setDetailInvoice(null);setSelectedClient(null);if(nextPage!=="invoices"){setClientFilterId("");updateInvoiceUrl();}}} className="max-w-28 rounded-full border border-slate-300 bg-white px-3 py-2 text-xs font-bold text-slate-900 md:hidden"><option value="dashboard">Dashboard</option><option value="clients">Clients</option><option value="new">New invoice</option><option value="invoices">Invoices</option><option value="domains">Domains</option><option value="recurring">Recurrings</option><option value="receipts">Receipts</option></select>
           </div>
         </div>

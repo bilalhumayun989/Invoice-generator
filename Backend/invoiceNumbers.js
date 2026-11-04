@@ -4,8 +4,8 @@ function getClientInitials(clientName) {
   return initials || 'CL';
 }
 
-export async function allocateInvoiceNumber(db, clientName) {
-  const invoices = await db.collection('invoices').find({}, { projection: { _id: 0, 'data.invoiceNumber': 1 } }).toArray();
+export async function allocateInvoiceNumber(db, clientName, ownerId) {
+  const invoices = await db.collection('invoices').find({ ownerId }, { projection: { _id: 0, 'data.invoiceNumber': 1 } }).toArray();
   const highestSavedNumber = invoices.reduce((highest, invoice) => {
     const match = String(invoice?.data?.invoiceNumber || '').match(/-(\d+)$/);
     return match ? Math.max(highest, Number(match[1]) || 0) : highest;
@@ -13,13 +13,13 @@ export async function allocateInvoiceNumber(db, clientName) {
 
   const counters = db.collection('invoiceNumberCounters');
   await counters.updateOne(
-    { _id: 'BT' },
+    { _id: `BT:${ownerId}` },
     { $max: { value: highestSavedNumber } },
     { upsert: true },
   );
 
   const counter = await counters.findOneAndUpdate(
-    { _id: 'BT' },
+    { _id: `BT:${ownerId}` },
     { $inc: { value: 1 } },
     { returnDocument: 'after', includeResultMetadata: false },
   );
